@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 
 import org.hawkular.apm.client.HawkularApmClient;
 import org.hawkular.apm.qe.ApmQEBase;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
 import io.opentracing.Tracer;
@@ -32,6 +33,12 @@ public class TestBase extends ApmQEBase {
     public void loadRequiredinstance() throws URISyntaxException {
         loadTracer(INSTRUMENTATION_TYPE.OPEN_TRACING);
         _restClient = ApmQEBase.getRestClient();
+    }
+
+    @AfterSuite
+    public void unloadResources() throws InterruptedException {
+        //Give some seconds to APMTracer-BatchTraceRecorder to send pending spans/traces
+        Thread.sleep(1000L * 2);
     }
 
     public void loadTracer(INSTRUMENTATION_TYPE type) {

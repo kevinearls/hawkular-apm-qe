@@ -44,12 +44,14 @@ public class OpenTracing implements IApmTracer {
     @Override
     public Tracer getTracer() {
         if (tracer == null) {
+
             BatchTraceRecorder traceRecorder = new BatchTraceRecorder.BatchTraceRecorderBuilder()
                     .withTracePublisher(new TracePublisherRESTClient(
                             ApmQEBase.getApmServerConf().getUsername(),
                             ApmQEBase.getApmServerConf().getPassword(),
                             ApmQEBase.getApmServerConf().getUrl()))
                     .withTenantId(ApmQEBase.getApmServerConf().getTenant())
+                    .withBatchTime(1000)
                     .build();
 
             tracer = new APMTracer(traceRecorder, Sampler.ALWAYS_SAMPLE,
@@ -57,7 +59,6 @@ public class OpenTracing implements IApmTracer {
                             ApmQEBase.getApmServerConf().getServiceName(),
                             ApmQEBase.getApmServerConf().getBuildStamp())
                     );
-
         }
         return tracer;
     }
