@@ -16,9 +16,6 @@
  */
 package org.hawkular.apm.qe.tests;
 
-import org.hawkular.apm.api.model.trace.Trace;
-import org.hawkular.client.core.ClientResponse;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import io.opentracing.Span;
