@@ -14,19 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.instrumentation;
+package org.hawkular.apm.qe.tracer;
 
 import io.opentracing.Tracer;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public class RestApi implements IApmTracer {
+public class RestApi implements ITracer {
 
     @Override
     public Tracer getTracer() {
-        // TODO Auto-generated method stub
-        return null;
+        throw new RuntimeException("This feature not implemente yet.");
     }
 
 }

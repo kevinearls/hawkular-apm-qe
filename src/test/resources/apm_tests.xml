@@ -17,11 +17,10 @@
 
 -->
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
-<suite name="Parallel tests" parallel="tests" thread-count="2">
-  <test name="Test One">
-    <parameter name="test-name" value="Test One" />
+<suite name="APM functional tests">
+  <test name="Simple tests">
     <classes>
-      <class name="org.hawkular.apm.qe.tests.MyTestNG" />
+      <class name="org.hawkular.apm.qe.tests.simple.BasicSpanTest" />
     </classes>
   </test>
 </suite>

@@ -18,10 +18,11 @@ package org.hawkular.apm.qe;
 
 import java.net.URISyntaxException;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.hawkular.apm.client.HawkularApmClient;
-import org.hawkular.apm.qe.instrumentation.IApmTracer;
-import org.hawkular.apm.qe.instrumentation.OpenTracing;
 import org.hawkular.apm.qe.model.ApmServerConf;
+import org.hawkular.apm.qe.tracer.ITracer;
+import org.hawkular.apm.qe.tracer.OpenTracing;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
@@ -34,7 +35,7 @@ public class ApmQEBase {
 
     private static ApmServerConf apmServerConf = ApmServerConf.builder()
             .tenant("hawkular")
-            .url("http://jee-hawkular.bc.jonqe.lab.eng.bos.redhat.com:8080")
+            .url("http://localhost:8080")
             .username("admin")
             .password("password")
             .serviceName("qe-automation")
@@ -47,7 +48,7 @@ public class ApmQEBase {
         return apmServerConf;
     }
 
-    public static IApmTracer getInstrumentation(INSTRUMENTATION_TYPE type) {
+    public static ITracer getInstrumentation(INSTRUMENTATION_TYPE type) {
         switch (type) {
             case OPEN_TRACING:
                 return OpenTracing.getInstance();
@@ -64,6 +65,30 @@ public class ApmQEBase {
                     .build();
         }
         return apmClient;
+    }
+
+    public long randomLong() {
+        return randomLong(0L, 100000L);
+    }
+
+    public long randomLong(long endExclusive) {
+        return randomLong(0L, endExclusive);
+    }
+
+    public long randomLong(long startInclusive, long endExclusive) {
+        return RandomUtils.nextLong(startInclusive, endExclusive);
+    }
+
+    public int randomInt() {
+        return randomInt(0, 1000);
+    }
+
+    public int randomInt(int endExclusive) {
+        return randomInt(0, endExclusive);
+    }
+
+    public int randomInt(int startInclusive, int endExclusive) {
+        return RandomUtils.nextInt(startInclusive, endExclusive);
     }
 
 }

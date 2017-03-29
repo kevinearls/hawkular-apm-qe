@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.instrumentation;
+package org.hawkular.apm.qe.tracer;
 
 import io.opentracing.Tracer;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public interface IApmTracer {
+public interface ITracer {
     Tracer getTracer();
 }

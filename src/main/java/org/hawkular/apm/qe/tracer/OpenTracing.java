@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.instrumentation;
+package org.hawkular.apm.qe.tracer;
 
 import org.hawkular.apm.client.api.recorder.BatchTraceRecorder;
 import org.hawkular.apm.client.api.sampler.Sampler;
@@ -28,7 +28,7 @@ import io.opentracing.Tracer;
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public class OpenTracing implements IApmTracer {
+public class OpenTracing implements ITracer {
 
     private static OpenTracing _INSTANCE = new OpenTracing();
     private Tracer tracer = null;
@@ -51,7 +51,6 @@ public class OpenTracing implements IApmTracer {
                             ApmQEBase.getApmServerConf().getPassword(),
                             ApmQEBase.getApmServerConf().getUrl()))
                     .withTenantId(ApmQEBase.getApmServerConf().getTenant())
-                    .withBatchTime(1000)
                     .build();
 
             tracer = new APMTracer(traceRecorder, Sampler.ALWAYS_SAMPLE,

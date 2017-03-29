@@ -30,47 +30,66 @@
   <name>Hawkular APM QE core automation</name>
   <description>Hawkular APM QE core automation</description>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.hawkular.apm.client</groupId>
-      <artifactId>hawkular-apm-java-client</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
-    </dependency>
+  <properties>
+    <version.io.opentracing>0.20.10</version.io.opentracing>
+    <version.org.hawkular.apm.java.client>0.0.1-SNAPSHOT</version.org.hawkular.apm.java.client>
+    <version.org.hawkular.apm>0.14.3.Final</version.org.hawkular.apm>
+    <version.org.projectlombok>1.16.14</version.org.projectlombok>
+    <version.org.slf4j>1.7.25</version.org.slf4j>
+  </properties>
 
+  <dependencies>
+
+    <!-- OpenTracing: https://github.com/opentracing/opentracing-java -->
     <dependency>
       <groupId>io.opentracing</groupId>
       <artifactId>opentracing-api</artifactId>
-      <version>0.20.10</version>
+      <version>${version.io.opentracing}</version>
     </dependency>
 
-    <!-- Hawkular APM Implementation -->
+    <!-- Hawkular APM java client: https://github.com/Hawkular-QE/hawkular-apm-client-java -->
+    <dependency>
+      <groupId>org.hawkular.apm.client</groupId>
+      <artifactId>hawkular-apm-java-client</artifactId>
+      <version>${version.org.hawkular.apm.java.client}</version>
+    </dependency>
+
+    <!-- Hawkular-APM API: https://github.com/hawkular/hawkular-apm/tree/master/api -->
+    <dependency>
+      <groupId>org.hawkular.apm</groupId>
+      <artifactId>hawkular-apm-api</artifactId>
+      <version>${version.org.hawkular.apm}</version>
+    </dependency>
+
+    <!-- Hawkular-APM OpenTracing support: https://github.com/hawkular/hawkular-apm/tree/master/client/opentracing -->
     <dependency>
       <groupId>org.hawkular.apm</groupId>
       <artifactId>hawkular-apm-client-opentracing</artifactId>
-      <version>0.14.3.Final</version>
+      <version>${version.org.hawkular.apm}</version>
     </dependency>
-    <!-- Span REST recorder -->
+
+    <!-- Hawkular APM Span REST recorder: https://github.com/hawkular/hawkular-apm/tree/master/client/trace-publisher-rest-client -->
     <dependency>
       <groupId>org.hawkular.apm</groupId>
       <artifactId>hawkular-apm-trace-publisher-rest-client</artifactId>
-      <version>0.14.3.Final</version>
+      <version>${version.org.hawkular.apm}</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
+    <!-- Project Lombok: https://projectlombok.org/ -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.16.14</version>
+      <version>${version.org.projectlombok}</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.slf4j/jul-to-slf4j -->
+    <!-- slf4j logging: https://www.slf4j.org/ -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
-      <version>1.7.25</version>
+      <version>${version.org.slf4j}</version>
     </dependency>
 
-
+    <!-- TestNG testing framework: http://testng.org/doc/ -->
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
@@ -96,7 +115,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
             <suiteXmlFiles>
-              <suiteXmlFile>src/test/resources/MyTests.xml</suiteXmlFile>
+              <suiteXmlFile>src/test/resources/apm_tests.xml</suiteXmlFile>
             </suiteXmlFiles>
           </configuration>
         </plugin>
