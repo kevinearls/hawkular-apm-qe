@@ -27,6 +27,7 @@ import org.hawkular.apm.api.model.trace.Trace;
 import org.hawkular.apm.client.HawkularApmClient;
 import org.hawkular.apm.client.model.Criteria;
 import org.hawkular.apm.qe.model.QESpan;
+import org.hawkular.apm.qe.model.QESpanBuilder;
 import org.hawkular.client.core.ClientResponse;
 import org.testng.Assert;
 
@@ -48,14 +49,14 @@ public class RestApiWrapper implements IServer {
         return criteria;
     }
 
-    private List<QESpan> buildSpan(List<Node> nodes, List<QESpan> spans) {
+    private List<QESpan> buildSpan(List<Node> nodes, List<QESpan> spans, QESpan parent) {
         if (nodes != null && !nodes.isEmpty()) {
             for (Node node : nodes) {
-                QESpan span = QESpan.builder()
-                        .operation(node.getOperation())
-                        .start(node.getTimestamp())
-                        .duration(node.getDuration())
+                QESpan span = QESpanBuilder.offlineBuilder(node.getOperation())
+                        .withStartTimestamp(node.getTimestamp())
+                        .asChildOf(parent)
                         .build();
+                span.finish(node.getTimestamp() + node.getDuration());
                 for (Property property : node.getProperties()) {
                     if (!(property.getName().equalsIgnoreCase("service")
                     || property.getName().equalsIgnoreCase("buildStamp"))) {
@@ -64,7 +65,7 @@ public class RestApiWrapper implements IServer {
                 }
                 spans.add(span);
                 if (nodes.get(0) instanceof ContainerNode) {
-                    buildSpan(((ContainerNode) (Object) node).getNodes(), spans);
+                    buildSpan(((ContainerNode) (Object) node).getNodes(), spans, span);
                 }
             }
         }
@@ -93,7 +94,7 @@ public class RestApiWrapper implements IServer {
         assertResponse(traceResponse);
         List<Node> nodes = traceResponse.getEntity().getNodes();
         if (!nodes.isEmpty()) {
-            buildSpan(nodes, spans);
+            buildSpan(nodes, spans, null);
         }
         return spans;
     }

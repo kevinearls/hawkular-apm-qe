@@ -20,16 +20,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.opentracing.Span;
-import lombok.Builder;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.ToString;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-@Data
-@Builder
+@Getter
 @ToString
+@AllArgsConstructor
 public class QESpan {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private Long start;
@@ -37,36 +37,46 @@ public class QESpan {
     private Long duration;
     private String operation;
     private String id;
+    private QESpan parent;
+    private Span spanObj;
+
+    public void setOperationName(String operation) {
+        this.operation = operation;
+        if (spanObj != null) {
+            spanObj.setOperationName(operation);
+        }
+    }
 
     public void setTag(String name, String value) {
         this.tags.put(name, value);
+        if (spanObj != null) {
+            spanObj.setTag(name, value);
+        }
     }
 
     public void setTag(String name, Boolean value) {
         this.tags.put(name, value);
+        if (spanObj != null) {
+            spanObj.setTag(name, value);
+        }
     }
 
     public void setTag(String name, Number value) {
         this.tags.put(name, value);
-    }
-
-    public void setObjectTag(String name, Object value) {
-        this.tags.put(name, value);
-    }
-
-    public void updateTags(Span span) {
-        for (String name : tags.keySet()) {
-            if (tags.get(name) instanceof String) {
-                span.setTag(name, (String) tags.get(name));
-            } else if (tags.get(name) instanceof Number) {
-                span.setTag(name, (Number) tags.get(name));
-            } else if (tags.get(name) instanceof Boolean) {
-                span.setTag(name, (Boolean) tags.get(name));
-            } else {
-                //Not supported
-            }
-
+        if (spanObj != null) {
+            spanObj.setTag(name, value);
         }
+    }
+
+    public void finish(Long end) {
+        this.end = end;
+        if (spanObj != null) {
+            spanObj.finish(end);
+        }
+    }
+
+    public void finish() {
+        finish(System.currentTimeMillis() * 1000L);
     }
 
     public Long getEnd() {
@@ -126,22 +136,4 @@ public class QESpan {
         return result;
     }
 
-    public static class QESpanBuilder {
-        private Map<String, Object> tags = new HashMap<String, Object>();
-
-        public QESpanBuilder withTag(String name, Number value) {
-            this.tags.put(name, value);
-            return this;
-        }
-
-        public QESpanBuilder withTag(String name, Boolean value) {
-            this.tags.put(name, value);
-            return this;
-        }
-
-        public QESpanBuilder withTag(String name, String value) {
-            this.tags.put(name, value);
-            return this;
-        }
-    }
 }

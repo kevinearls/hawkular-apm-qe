@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 
 import org.hawkular.apm.client.HawkularApmClient;
 import org.hawkular.apm.qe.ApmQEBase;
+import org.hawkular.apm.qe.model.QETracer;
 import org.testng.annotations.BeforeSuite;
 
 import io.opentracing.Tracer;
@@ -31,12 +32,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TestBase extends ApmQEBase {
     private static Tracer _tracer = null;
+    private static QETracer _qeTracer = null;
     private static HawkularApmClient _restClient = null;
     private static IServer _server = null;
 
     //Returns tracer instance to test classes
     public Tracer tracer() {
         return _tracer;
+    }
+
+    //Returns internal QEtracer instance to test classes
+    public QETracer qeTracer() {
+        return _qeTracer;
     }
 
     //Returns rest client instance to test classes
@@ -52,8 +59,9 @@ public class TestBase extends ApmQEBase {
     @BeforeSuite
     public void loadRequiredinstance() throws URISyntaxException {
         _tracer = ApmQEBase.getInstrumentation(INSTRUMENTATION_TYPE.OPEN_TRACING).getTracer();
+        _qeTracer = new QETracer(tracer());
         _restClient = ApmQEBase.getRestClient();
-        _server = new RestApiWrapper(_restClient);
+        _server = new RestApiWrapper(restClient());
     }
 
     public void sleep() {

@@ -114,6 +114,12 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
+            <systemProperties>
+              <property>
+                <name>logback.configurationFile</name>
+                <value>../classes/logback.xml</value>
+              </property>
+            </systemProperties>
             <suiteXmlFiles>
               <suiteXmlFile>src/test/resources/apm_tests.xml</suiteXmlFile>
             </suiteXmlFiles>

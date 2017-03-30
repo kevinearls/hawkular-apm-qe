@@ -24,8 +24,6 @@ import org.hawkular.apm.qe.tests.TestBase;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import io.opentracing.Span;
-
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
@@ -44,36 +42,23 @@ public class BasicSpanTest extends TestBase {
         long start = end - randomLong(100L * 1000L);
         String operation = "basicSpanTestWithSingleChild_" + randomInt(0, 100);
         List<QESpan> spansExpected = new ArrayList<QESpan>();
-        QESpan parentQESpan = QESpan.builder()
-                .operation(operation)
-                .start(start)
-                .end(end)
+        QESpan parentQESpan = qeTracer().buildSpan(operation)
+                .withStartTimestamp(start)
                 .withTag("start", start)
                 .withTag("end", end)
                 .withTag("type", "m-start-end")
-                .build();
+                .start();
         spansExpected.add(parentQESpan);
-        //Parent span
-        Span parentSpan = tracer().buildSpan(parentQESpan.getOperation())
-                .withStartTimestamp(start)
-                .start();
-        parentQESpan.updateTags(parentSpan);
         //Child span
-        QESpan childQESpan = QESpan.builder()
-                .operation(operation + "_child1")
-                .start(start)
-                .end(randomLong(start, end))
-                .withTag("node", "child1")
-                .build();
-        Span childSpan = tracer().buildSpan(childQESpan.getOperation())
-                .asChildOf(parentSpan)
+        QESpan childQESpan = qeTracer().buildSpan(operation + "_child1")
                 .withStartTimestamp(start)
+                .withTag("node", "child1")
+                .asChildOf(parentQESpan)
                 .start();
-        childQESpan.updateTags(childSpan);
         spansExpected.add(childQESpan);
         //Send span to server
-        childSpan.finish(childQESpan.getEnd());
-        parentSpan.finish(parentQESpan.getEnd());
+        childQESpan.finish(randomLong(start, end));
+        parentQESpan.finish(end);
 
         //Give some delay to settle down spans to server
         sleep();
