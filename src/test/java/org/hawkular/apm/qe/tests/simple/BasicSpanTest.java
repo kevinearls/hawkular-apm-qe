@@ -29,8 +29,50 @@ import org.testng.annotations.Test;
  */
 public class BasicSpanTest extends TestBase {
 
-    @Test
-    public void test() throws InterruptedException {
+    @Test(priority = 0)
+    public void rootSpantest() throws InterruptedException {
+        /*Description: Create root/single span send it to server via tracer
+         * validate it from server.
+         * Steps:
+         * 1. Create root span
+         * 2. send it to server by calling finish() method of span
+         * 3. validate from server
+         */
+        long end = System.currentTimeMillis() * 1000L; // in microseconds
+        long start = end - randomLong(100L * 1000L);
+        String operation = "rootSpanTest_" + randomInt(0, 100);
+        List<QESpan> spansExpected = new ArrayList<QESpan>();
+        QESpan parentQESpan = qeTracer().buildSpan(operation)
+                .withStartTimestamp(start)
+                .withTag("start", start)
+                .withTag("end", end)
+                .withTag("type", "m-start-end")
+                .start();
+        spansExpected.add(parentQESpan);
+        parentQESpan.finish(end);
+
+        //Give some delay to settle down spans to server
+        sleep();
+
+        //Validate span on server
+        List<QESpan> spansActual = server().listSpan(operation, start / 1000, end / 1000);
+        Assert.assertEquals(spansActual.size(), spansExpected.size());
+        //Validate span on server
+        for (QESpan spanExpected : spansExpected) {
+            boolean found = false;
+            for (int index = 0; index < spansActual.size(); index++) {
+                if (spanExpected.equals(spansActual.get(index))) {
+                    found = true;
+                    break;
+                }
+            }
+            Assert.assertTrue(found, "Not found: " + spanExpected.toString());
+        }
+
+    }
+
+    @Test(priority = 1)
+    public void childSpantest() throws InterruptedException {
         /*Description: Create parent span and child span send it to server via tracer
          * validate it from server.
          * Steps:
@@ -77,6 +119,5 @@ public class BasicSpanTest extends TestBase {
             }
             Assert.assertTrue(found, "Not found: " + spanExpected.toString());
         }
-
     }
 }
