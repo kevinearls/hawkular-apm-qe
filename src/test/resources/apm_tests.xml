@@ -21,6 +21,7 @@
   <test name="Simple tests">
     <classes>
       <class name="org.hawkular.apm.qe.tests.simple.BasicSpanTest" />
+      <class name="org.hawkular.apm.qe.tests.simple.TagAndDurationTests" />
     </classes>
   </test>
 </suite>
