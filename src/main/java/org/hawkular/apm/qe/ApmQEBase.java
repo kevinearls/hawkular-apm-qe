@@ -28,6 +28,12 @@ import org.hawkular.apm.qe.tracer.OpenTracing;
  * @author Jeeva Kandasamy (jkandasa)
  */
 public class ApmQEBase {
+    public static String HAWKULAR_APM_URI = System.getenv().getOrDefault("HAWKULAR_APM_URI", "http://localhost:8080");
+    public static String HAWKULAR_APM_USERNAME = System.getenv().getOrDefault("HAWKULAR_APM_USERNAME", "admin");
+    public static String HAWKULAR_APM_PASSWORD = System.getenv().getOrDefault("HAWKULAR_APM_PASSWORD", "password");
+    public static String HAWKULAR_SERVICE_NAME = System.getenv()
+            .getOrDefault("HAWKULAR_SERVICE_NAME", "qe-automation");
+
     public enum INSTRUMENTATION_TYPE {
         OPEN_TRACING,
         REST_API
@@ -35,10 +41,10 @@ public class ApmQEBase {
 
     private static ApmServerConf apmServerConf = ApmServerConf.builder()
             .tenant("hawkular")
-            .url("http://jee-hawkular.bc.jonqe.lab.eng.bos.redhat.com:8080")
-            .username("admin")
-            .password("password")
-            .serviceName("qe-automation")
+            .url(HAWKULAR_APM_URI)
+            .username(HAWKULAR_APM_USERNAME)
+            .password(HAWKULAR_APM_PASSWORD)
+            .serviceName(HAWKULAR_SERVICE_NAME)
             .buildStamp("1")
             .build();
 
