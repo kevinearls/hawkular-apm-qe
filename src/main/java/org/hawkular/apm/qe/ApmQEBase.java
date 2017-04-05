@@ -35,7 +35,7 @@ public class ApmQEBase {
 
     private static ApmServerConf apmServerConf = ApmServerConf.builder()
             .tenant("hawkular")
-            .url("http://localhost:8080")
+            .url("http://jee-hawkular.bc.jonqe.lab.eng.bos.redhat.com:8080")
             .username("admin")
             .password("password")
             .serviceName("qe-automation")

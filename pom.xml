@@ -117,11 +117,11 @@
             <systemProperties>
               <property>
                 <name>logback.configurationFile</name>
-                <value>../classes/logback.xml</value>
+                <value>../classes/conf/logback.xml</value>
               </property>
             </systemProperties>
             <suiteXmlFiles>
-              <suiteXmlFile>src/test/resources/apm_tests.xml</suiteXmlFile>
+              <suiteXmlFile>src/test/resources/tests/apm_tests.xml</suiteXmlFile>
             </suiteXmlFiles>
           </configuration>
         </plugin>
