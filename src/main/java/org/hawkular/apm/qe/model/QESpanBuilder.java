@@ -20,12 +20,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public class QESpanBuilder {
+public class QESpanBuilder implements Tracer.SpanBuilder {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private Long start;
     private Long end;
@@ -45,17 +47,29 @@ public class QESpanBuilder {
         this.operation = operation;
     }
 
-    public QESpanBuilder withStartTimestamp(Long start) {
+    public Tracer.SpanBuilder withStartTimestamp(long start) {
         this.start = start;
         return this;
     }
 
-    public QESpanBuilder asChildOf(QESpan parent) {
-        this.parent = parent;
+
+    /**
+     * FIXME Implement
+     *
+     * @param parent
+     * @return
+     */
+    @Override
+    public Tracer.SpanBuilder asChildOf(SpanContext parent) {
+        throw new NotImplementedYetException();
+    }
+
+    public Tracer.SpanBuilder asChildOf(Span parent) {
+        this.parent = (QESpan) parent;
         return this;
     }
 
-    public QESpan start() {
+    public Span start() {
         if (tracer == null) {
             throw new RuntimeException("Tracer has been not set. Call 'build()' method to create offline instance");
         }
@@ -95,18 +109,33 @@ public class QESpanBuilder {
         return new QESpan(tags, start, end, duration, operation, id, parent, null);
     }
 
-    public QESpanBuilder withTag(String name, Number value) {
+    public Tracer.SpanBuilder withTag(String name, Number value) {
         this.tags.put(name, value);
         return this;
     }
 
-    public QESpanBuilder withTag(String name, Boolean value) {
+    public Tracer.SpanBuilder withTag(String name, boolean value) {
         this.tags.put(name, value);
         return this;
     }
 
-    public QESpanBuilder withTag(String name, String value) {
+    @Override
+    public Tracer.SpanBuilder addReference(String s, SpanContext spanContext) {
+        return null;
+    }
+
+    public Tracer.SpanBuilder withTag(String name, String value) {
         this.tags.put(name, value);
         return this;
+    }
+
+    /**
+     * TODO implement
+     * 
+     * @return
+     */
+    @Override
+    public Iterable<Map.Entry<String, String>> baggageItems() {
+        throw new NotImplementedYetException();
     }
 }

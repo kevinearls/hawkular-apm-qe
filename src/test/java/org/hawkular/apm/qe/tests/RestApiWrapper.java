@@ -19,6 +19,8 @@ package org.hawkular.apm.qe.tests;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 import org.hawkular.apm.api.model.Property;
 import org.hawkular.apm.api.model.events.CompletionTime;
 import org.hawkular.apm.api.model.trace.ContainerNode;
@@ -52,10 +54,11 @@ public class RestApiWrapper implements IServer {
     private List<QESpan> buildSpan(List<Node> nodes, List<QESpan> spans, QESpan parent) {
         if (nodes != null && !nodes.isEmpty()) {
             for (Node node : nodes) {
-                QESpan span = QESpanBuilder.offlineBuilder(node.getOperation())
+                Tracer.SpanBuilder qeSpanBuilder = QESpanBuilder.offlineBuilder(node.getOperation())
                         .withStartTimestamp(node.getTimestamp())
-                        .asChildOf(parent)
-                        .build();
+                        .asChildOf(parent);
+                QESpan span = ((QESpanBuilder)qeSpanBuilder).build();
+
                 span.finish(node.getTimestamp() + node.getDuration());
                 for (Property property : node.getProperties()) {
                     if (!(property.getName().equalsIgnoreCase("service")

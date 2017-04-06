@@ -16,12 +16,15 @@
  */
 package org.hawkular.apm.qe.model;
 
+import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
+import io.opentracing.propagation.Format;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public class QETracer {
+public class QETracer  implements Tracer {
     Tracer tracer = null;
 
     public QETracer(Tracer tracer) {
@@ -30,5 +33,15 @@ public class QETracer {
 
     public QESpanBuilder buildSpan(String operation) {
         return new QESpanBuilder(this.tracer, operation);
+    }
+
+    @Override
+    public <C> void inject(SpanContext spanContext, Format<C> format, C c) {
+        throw new NotImplementedYetException();
+    }
+
+    @Override
+    public <C> SpanContext extract(Format<C> format, C c) {
+        throw new NotImplementedYetException();
     }
 }

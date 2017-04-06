@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.opentracing.Span;
+import io.opentracing.SpanContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -30,7 +31,7 @@ import lombok.ToString;
 @Getter
 @ToString
 @AllArgsConstructor
-public class QESpan {
+public class QESpan implements Span {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private Long start;
     private Long end;
@@ -40,43 +41,115 @@ public class QESpan {
     private QESpan parent;
     private Span spanObj;
 
-    public void setOperationName(String operation) {
+    public Span setOperationName(String operation) {
         this.operation = operation;
         if (spanObj != null) {
             spanObj.setOperationName(operation);
         }
+        return this;
     }
 
-    public void setTag(String name, String value) {
+
+    @Deprecated
+    @Override
+    public Span log(String event, Object payload) {
+        spanObj.log(event, payload);
+        return this;
+    }
+
+
+    @Deprecated
+    @Override
+    public Span log(long timestampMicroseconds, String event, Object payload) {
+        spanObj.log(timestampMicroseconds, event, payload);
+        return this;
+    }
+
+    public Span setTag(String name, String value) {
         this.tags.put(name, value);
         if (spanObj != null) {
             spanObj.setTag(name, value);
         }
+        return this;
     }
 
-    public void setTag(String name, Boolean value) {
+    public Span setTag(String name, boolean value) {
         this.tags.put(name, value);
         if (spanObj != null) {
             spanObj.setTag(name, value);
         }
+        return this;
     }
 
-    public void setTag(String name, Number value) {
+    public Span setTag(String name, Number value) {
         this.tags.put(name, value);
         if (spanObj != null) {
             spanObj.setTag(name, value);
         }
+        return this;
     }
 
-    public void finish(Long end) {
+
+    @Override
+    public Span log(Map<String, ?> fields) {
+        spanObj.log(fields);
+        return this;
+    }
+
+
+    @Override
+    public Span log(long timestampMicroseconds, Map<String, ?> fields) {
+        spanObj.log(timestampMicroseconds, fields);
+        return this;
+    }
+
+
+    @Override
+    public Span log(String event) {
+        spanObj.log(event);
+        return this;
+    }
+
+
+    @Override
+    public Span log(long timestampMicroseconds, String event) {
+        spanObj.log(timestampMicroseconds, event);
+        return this;
+    }
+
+
+    @Override
+    public Span setBaggageItem(String key, String value) {
+       spanObj.setBaggageItem(key, value);
+       return this;
+    }
+
+
+    @Override
+    public String getBaggageItem(String key) {
+        return spanObj.getBaggageItem(key);
+    }
+
+    public void finish(long end) {
         this.end = end;
         if (spanObj != null) {
             spanObj.finish(end);
         }
     }
 
+
+    @Override
+    public SpanContext context() {
+        return spanObj.context();
+    }
+
     public void finish() {
         finish(System.currentTimeMillis() * 1000L);
+    }
+
+    @Override
+    public void close() {
+
     }
 
     public Long getEnd() {
