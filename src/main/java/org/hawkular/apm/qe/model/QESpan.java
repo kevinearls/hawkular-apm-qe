@@ -31,7 +31,7 @@ import lombok.ToString;
 @Getter
 @ToString
 @AllArgsConstructor
-public class QESpan implements Span {  // TODO extend and override?
+public class QESpan implements Span {
     private Map<String, Object> tags = new HashMap<String, Object>();
     private Long start;
     private Long end;
