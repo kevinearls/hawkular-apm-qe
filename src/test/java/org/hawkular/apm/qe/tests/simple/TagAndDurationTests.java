@@ -16,6 +16,8 @@
  */
 package org.hawkular.apm.qe.tests.simple;
 
+import io.opentracing.Span;
+import lombok.extern.java.Log;
 import org.hawkular.apm.client.model.Criteria;
 import org.hawkular.apm.qe.model.QESpan;
 import org.hawkular.apm.qe.tests.TestBase;
@@ -23,7 +25,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -32,14 +34,14 @@ import static org.testng.Assert.assertTrue;
  * Created by Kevin Earls on 04 April 2017.
  */
 public class TagAndDurationTests extends TestBase {
-    private AtomicInteger operationId = new AtomicInteger(1001);
+    private AtomicLong operationId = new AtomicLong(System.currentTimeMillis());
 
     /**
      * Write a single span with one tag, and verify that the correct tag is returned
      */
     @Test
     public void simpleTagTest() {
-        QESpan span = qeTracer().buildSpan("someOperation-" + operationId.getAndIncrement())
+        Span span = qeTracer().buildSpan("simpleTagTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
         span.finish();
@@ -65,7 +67,7 @@ public class TagAndDurationTests extends TestBase {
      */
     @Test
     public void simpleDurationTest() throws InterruptedException {
-        QESpan span = qeTracer().buildSpan("someOperation-" + operationId.getAndIncrement())
+        Span span = qeTracer().buildSpan("simpleDurationTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
         long expectedMinimumDuration = 100;

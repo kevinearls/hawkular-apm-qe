@@ -19,6 +19,7 @@ package org.hawkular.apm.qe.tests.simple;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.opentracing.Span;
 import org.hawkular.apm.qe.model.QESpan;
 import org.hawkular.apm.qe.tests.TestBase;
 import org.testng.Assert;
@@ -42,14 +43,14 @@ public class BasicSpanTest extends TestBase {
         long start = end - randomLong(100L * 1000L);
         String operation = "rootSpanTest_" + randomInt(0, 100);
         List<QESpan> spansExpected = new ArrayList<QESpan>();
-        QESpan parentQESpan = qeTracer().buildSpan(operation)
+        Span parentSpan = qeTracer().buildSpan(operation)
                 .withStartTimestamp(start)
                 .withTag("start", start)
                 .withTag("end", end)
                 .withTag("type", "m-start-end")
                 .start();
-        spansExpected.add(parentQESpan);
-        parentQESpan.finish(end);
+        spansExpected.add((QESpan) parentSpan);
+        parentSpan.finish(end);
 
         //Give some delay to settle down spans to server
         sleep();
@@ -84,23 +85,23 @@ public class BasicSpanTest extends TestBase {
         long start = end - randomLong(100L * 1000L);
         String operation = "basicSpanTestWithSingleChild_" + randomInt(0, 100);
         List<QESpan> spansExpected = new ArrayList<QESpan>();
-        QESpan parentQESpan = qeTracer().buildSpan(operation)
+        Span parentSpan = qeTracer().buildSpan(operation)
                 .withStartTimestamp(start)
                 .withTag("start", start)
                 .withTag("end", end)
                 .withTag("type", "m-start-end")
                 .start();
-        spansExpected.add(parentQESpan);
+        spansExpected.add((QESpan) parentSpan);
         //Child span
-        QESpan childQESpan = qeTracer().buildSpan(operation + "_child1")
+        Span childSpan = qeTracer().buildSpan(operation + "_child1")
                 .withStartTimestamp(start)
                 .withTag("node", "child1")
-                .asChildOf(parentQESpan)
+                .asChildOf(parentSpan)
                 .start();
-        spansExpected.add(childQESpan);
+        spansExpected.add((QESpan) childSpan);
         //Send span to server
-        childQESpan.finish(randomLong(start, end));
-        parentQESpan.finish(end);
+        childSpan.finish(randomLong(start, end));
+        parentSpan.finish(end);
 
         //Give some delay to settle down spans to server
         sleep();
