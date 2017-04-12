@@ -16,10 +16,11 @@
  */
 package org.hawkular.apm.qe.model;
 
+import org.jboss.resteasy.spi.NotImplementedYetException;
+
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.propagation.Format;
-import org.jboss.resteasy.spi.NotImplementedYetException;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)

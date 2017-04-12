@@ -19,10 +19,12 @@ package org.hawkular.apm.qe.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jboss.resteasy.spi.NotImplementedYetException;
+
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
-import org.jboss.resteasy.spi.NotImplementedYetException;
+
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
@@ -129,9 +131,10 @@ public class QESpanBuilder implements Tracer.SpanBuilder {
         return this;
     }
 
+
     /**
-     * TODO implement
-     * 
+     * TODO Implement
+     *
      * @return
      */
     @Override

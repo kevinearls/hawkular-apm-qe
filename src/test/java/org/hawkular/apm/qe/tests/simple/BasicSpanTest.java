@@ -19,11 +19,12 @@ package org.hawkular.apm.qe.tests.simple;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.opentracing.Span;
 import org.hawkular.apm.qe.model.QESpan;
 import org.hawkular.apm.qe.tests.TestBase;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import io.opentracing.Span;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)

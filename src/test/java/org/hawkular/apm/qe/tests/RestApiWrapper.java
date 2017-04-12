@@ -19,8 +19,6 @@ package org.hawkular.apm.qe.tests;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.opentracing.Span;
-import io.opentracing.Tracer;
 import org.hawkular.apm.api.model.Property;
 import org.hawkular.apm.api.model.events.CompletionTime;
 import org.hawkular.apm.api.model.trace.ContainerNode;
@@ -32,6 +30,8 @@ import org.hawkular.apm.qe.model.QESpan;
 import org.hawkular.apm.qe.model.QESpanBuilder;
 import org.hawkular.client.core.ClientResponse;
 import org.testng.Assert;
+
+import io.opentracing.Tracer;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
