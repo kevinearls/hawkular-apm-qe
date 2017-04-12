@@ -41,6 +41,7 @@ public class TagAndDurationTests extends TestBase {
      */
     @Test
     public void simpleTagTest() {
+        long startTime = System.currentTimeMillis();
         Span span = qeTracer().buildSpan("simpleTagTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
@@ -48,8 +49,9 @@ public class TagAndDurationTests extends TestBase {
 
         sleep();
 
-        Criteria emptyCriteria = new Criteria();
-        List<QESpan> spans = server().listSpan(emptyCriteria);
+        Criteria criteria = new Criteria();
+        criteria.setStartTime(startTime);
+        List<QESpan> spans = server().listSpan(criteria);
         assertEquals(1, spans.size(), "Expected 1 span");
         QESpan receivedSpan = spans.get(0);
 
@@ -67,6 +69,7 @@ public class TagAndDurationTests extends TestBase {
      */
     @Test
     public void simpleDurationTest() throws InterruptedException {
+        long startTime = System.currentTimeMillis();
         Span span = qeTracer().buildSpan("simpleDurationTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
@@ -76,8 +79,9 @@ public class TagAndDurationTests extends TestBase {
 
         sleep();
 
-        Criteria emptyCriteria = new Criteria();
-        List<QESpan> spans = server().listSpan(emptyCriteria);
+        Criteria criteria = new Criteria();
+        criteria.setStartTime(startTime);
+        List<QESpan> spans = server().listSpan(criteria);
         assertEquals(1, spans.size(), "Expected 1 span");
         QESpan receivedSpan = spans.get(0);
 
