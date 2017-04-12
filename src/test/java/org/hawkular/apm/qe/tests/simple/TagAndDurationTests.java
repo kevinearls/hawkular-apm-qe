@@ -16,19 +16,19 @@
  */
 package org.hawkular.apm.qe.tests.simple;
 
-import io.opentracing.Span;
-import lombok.extern.java.Log;
-import org.hawkular.apm.client.model.Criteria;
-import org.hawkular.apm.qe.model.QESpan;
-import org.hawkular.apm.qe.tests.TestBase;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.hawkular.apm.client.model.Criteria;
+import org.hawkular.apm.qe.model.QESpan;
+import org.hawkular.apm.qe.tests.TestBase;
+import org.testng.annotations.Test;
+
+import io.opentracing.Span;
 
 /**
  * Created by Kevin Earls on 04 April 2017.
