@@ -30,6 +30,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.hawkular.apm.qe.model.QESpan;
 
+import org.jboss.resteasy.spi.NotImplementedYetException;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,7 +49,6 @@ import com.uber.jaeger.senders.UDPSender;
 import io.opentracing.Tracer;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jboss.resteasy.spi.NotImplementedYetException;
 
 /**
  * @author Kevin Earls 14 April 2017
@@ -151,9 +152,7 @@ public class JaegerQEBase {
 
         Invocation.Builder builder = target.request();
         builder.accept(MediaType.APPLICATION_XML);
-        String result = builder.get(String.class);   // TODO can I get as JsonNode?
-
-        _logger.info("GOT {}", result);
+        String result = builder.get(String.class);
 
         JsonNode jsonPayload = jsonObjectMapper.readTree(result);
         JsonNode data = jsonPayload.get("data");
@@ -223,7 +222,7 @@ public class JaegerQEBase {
 
         // 1 tags. 2 Long start.  3. Long end.  4. Long duration 5. operation string
         // 6. id String.  7 QESpan parent.  8:     SpanObj -- the span itself.
-        QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null);
+        QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null, jsonSpan);
         return qeSpan;
     }
 

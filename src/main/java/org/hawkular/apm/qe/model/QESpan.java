@@ -19,8 +19,11 @@ package org.hawkular.apm.qe.model;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -40,6 +43,7 @@ public class QESpan implements Span {
     private String id;
     private QESpan parent;
     private Span spanObj;
+    private JsonNode json;
 
     public Span setOperationName(String operation) {
         this.operation = operation;
@@ -164,6 +168,10 @@ public class QESpan implements Span {
             return end - start;
         }
         return duration;
+    }
+
+    public JsonNode getJson() {
+        return json;
     }
 
     @Override

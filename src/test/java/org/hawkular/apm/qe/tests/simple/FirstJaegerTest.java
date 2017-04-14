@@ -74,16 +74,17 @@ public class FirstJaegerTest extends JaegerQEBase {
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
         assertEquals(1, spans.size(), "Expected 1 span");
         QESpan qeSpan = spans.get(0);
+        _logger.info(prettyPrintJson(qeSpan.getJson()));
 
         assertEquals(qeSpan.getOperation(), operationName);
 
-        Map<String, Object> tags = qeSpan.getTags();
-        // TODO how to check tags for size?
+        Map<String, Object> tags = qeSpan.getTags();        // TODO how to check tags for size?
         Object simpleTag = tags.get("simple");
         assertNotNull(simpleTag);
         assertEquals("true", simpleTag.toString());
     }
 
+    
     /**
      * TODO Open a bug on this.
      *
@@ -97,6 +98,7 @@ public class FirstJaegerTest extends JaegerQEBase {
         span.log("event");
         Assert.fail("Jaeger must have fixed this, update the tests.");
     }
+
 
     /**
      * TODO Open a bug on this.  According to the OpenTracing spec tags can be
