@@ -146,7 +146,7 @@ public class JaegerQEBase {
         if (parameters != null && !parameters.trim().isEmpty()) {
             targetUrl = targetUrl + "&" + parameters;     // TODO pass parameters as Map?
         }
-        _logger.info("using targetURL [{}]", targetUrl);
+        _logger.debug("using targetURL [{}]", targetUrl);
 
         WebTarget target = client.target(targetUrl);
 
