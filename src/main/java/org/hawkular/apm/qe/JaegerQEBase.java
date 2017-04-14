@@ -16,9 +16,24 @@
  */
 package org.hawkular.apm.qe;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+
+import org.hawkular.apm.qe.model.QESpan;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.uber.jaeger.metrics.Metrics;
 import com.uber.jaeger.metrics.NullStatsReporter;
 import com.uber.jaeger.metrics.StatsFactoryImpl;
@@ -28,23 +43,14 @@ import com.uber.jaeger.samplers.ProbabilisticSampler;
 import com.uber.jaeger.samplers.Sampler;
 import com.uber.jaeger.senders.Sender;
 import com.uber.jaeger.senders.UDPSender;
-import io.opentracing.Tracer;
-import lombok.extern.slf4j.Slf4j;
-import org.hawkular.apm.qe.model.QESpan;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import io.opentracing.Tracer;
+
+import lombok.extern.slf4j.Slf4j;
+import org.jboss.resteasy.spi.NotImplementedYetException;
 
 /**
- * @author Kevin Earls
+ * @author Kevin Earls 14 April 2017
  */
 @Slf4j
 public class JaegerQEBase {
@@ -86,6 +92,7 @@ public class JaegerQEBase {
         return tracer;
     }
 
+
     /**
      * Make sure spans are flushed before trying to retrieve them
      */
@@ -104,6 +111,21 @@ public class JaegerQEBase {
         return getTraces("");
     }
 
+
+    /**
+     * Return all of the traces created since the start time given.  NOTE: The Jaeger Rest API
+     * requires a time in microseconds.  For convenience this method accepts milliseconds and converts.
+     *
+     * @param testStartTime in milliseconds
+     * @return
+     * @throws Exception
+     */
+    public List<JsonNode> getTracesSinceTestStart(long testStartTime) throws Exception {
+        List<JsonNode> traces = getTraces("start=" + (testStartTime * 1000));
+        return traces;
+    }
+
+
     /**
      * GET all traces for a service: http://localhost:3001/api/traces?service=something
      * GET a Trace by id: http://localhost:3001/api/traces/23652df68bd54e15
@@ -117,6 +139,7 @@ public class JaegerQEBase {
      * @throws Exception
      */
     public List<JsonNode> getTraces(String parameters) throws Exception {
+        waitForFlush(); // TODO make sure this is necessary
         Client client = ClientBuilder.newClient();
         String targetUrl = "http://localhost:3001/api/traces?service=" + SERVICE_NAME;
         if (parameters != null && !parameters.trim().isEmpty()) {
@@ -145,49 +168,32 @@ public class JaegerQEBase {
     }
 
 
-    public List<JsonNode> getSpansFromTrace(JsonNode trace) {
-        List<JsonNode> spans = new ArrayList<>();
+    /**
+     * Convert all JSON Spans in the Trace to QESpans
+     *
+     * TODO: Figure out how to deal with parents
+     *
+     * @param trace
+     * @return
+     */
+    public List<QESpan> getSpansFromTrace(JsonNode trace) {
+        List<QESpan> spans = new ArrayList<>();
         Iterator<JsonNode> spanIterator = trace.get("spans").iterator();
+
         while (spanIterator.hasNext()) {
-            // TODO here is where we could convert them
-            spans.add(spanIterator.next());
+            JsonNode jsonSpan = spanIterator.next();
+            QESpan span = createSpanFromJsonNode(jsonSpan);
+            spans.add(span);
         }
         return spans;
     }
 
-    /* Span contains at least:  (Not including logs)
-    {
-  "traceID" : "63b5b56ef175dc0",
-  "spanID" : "63b5b56ef175dc0",
-  "operationName" : "writeASingleSpanTest-1",
-  "startTime" : 1492159466057000,
-  "duration" : 2258,
-  "tags" : [ {
-    "key" : "component",
-    "type" : "string",
-    "value" : "qe-automation"
-  }, {
-    "key" : "sampler.type",
-    "type" : "string",
-    "value" : "probabilistic"
-  }, {
-    "key" : "sampler.param",
-    "type" : "string",
-    "value" : "1.0"
-  }, {
-    "key" : "simple",
-    "type" : "string",
-    "value" : "true"
-  }, {
-    "key" : "errZeroParentID",
-    "type" : "string",
-    "value" : "0"
-  } ],
-  "processID" : "p1"
-}
 
+    /**
+     * Convert a Span in JSON returned from the Rest API to a QESpan
+      * @param jsonSpan
+     * @return
      */
-
     public QESpan createSpanFromJsonNode(JsonNode jsonSpan) {
         Map<String, Object> tags = new HashMap<>();
 
@@ -195,18 +201,25 @@ public class JaegerQEBase {
         Iterator<JsonNode> jsonTagsIterator = jsonTags.iterator();
         while (jsonTagsIterator.hasNext()) {
             JsonNode jsonTag = jsonTagsIterator.next();
-            //_logger.info("Creating tag with key {} value {} ", jsonTag.get("key").textValue(), jsonTag.get("value").textValue());
+            String type = jsonTag.get("type").asText();
+            if (type.equals("string")) {
+                String key = jsonTag.get("key").asText();
+                String value = jsonTag.get("value").asText();
+                tags.put(key, value);
+            } else {
+                // FIXME tags should have type of String, Boolean, or Integer;
+                throw new NotImplementedYetException("Update to handle Numbers and Booleans");
+            }
             tags.put(jsonTag.get("key").textValue(), jsonTag.get("value").textValue());
         }
 
         Long start = jsonSpan.get("startTime").asLong();
-        System.out.println(">>>>>> JSON Start Time " + start);
         Long duration = jsonSpan.get("duration").asLong();
         Long end = start + duration;
         String operation = jsonSpan.get("operationName").textValue();
         String id = jsonSpan.get("spanID").textValue();
 
-        // TODO how to get Parent; redefine spanObj?
+        // TODO how to get Parent; add field for JSON?
 
         // 1 tags. 2 Long start.  3. Long end.  4. Long duration 5. operation string
         // 6. id String.  7 QESpan parent.  8:     SpanObj -- the span itself.
