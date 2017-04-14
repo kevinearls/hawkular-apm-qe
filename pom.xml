@@ -35,6 +35,7 @@
     <version.org.hawkular.apm.java.client>0.0.1-SNAPSHOT</version.org.hawkular.apm.java.client>
     <version.org.hawkular.apm>0.14.3.Final</version.org.hawkular.apm>
     <version.org.projectlombok>1.16.14</version.org.projectlombok>
+    <version.jaeger>0.17.0</version.jaeger>
     <version.org.slf4j>1.7.25</version.org.slf4j>
   </properties>
 
@@ -73,6 +74,13 @@
       <groupId>org.hawkular.apm</groupId>
       <artifactId>hawkular-apm-trace-publisher-rest-client</artifactId>
       <version>${version.org.hawkular.apm}</version>
+    </dependency>
+
+    <!-- Jaeger -->
+    <dependency>
+      <groupId>com.uber.jaeger</groupId>
+      <artifactId>jaeger-core</artifactId>
+      <version>${version.jaeger}</version>
     </dependency>
 
     <!-- Project Lombok: https://projectlombok.org/ -->
