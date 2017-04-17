@@ -128,12 +128,17 @@ public class JaegerQEBase {
 
 
     /**
+     * TODO: Figure out the Jaeger REST Api.  Key code can be found
+     *
+     *  https://github.com/uber/jaeger/blob/master/cmd/query/app/handler.go#L120-L130 with parameter info
+     *  https://github.com/uber/jaeger/blob/master/cmd/query/app/query_parser.go#L68-L81
+     *
      * GET all traces for a service: http://localhost:3001/api/traces?service=something
      * GET a Trace by id: http://localhost:3001/api/traces/23652df68bd54e15
      * GET services http://localhost:3001/api/services
      *
      * GET after a specific time: http://localhost:3001/api/traces?service=something&start=1492098196598
-     * Doesn't seem to work.   See query_parent.go
+     * NOTE: time is in MICROseconds.
      *
      *
      *
@@ -218,10 +223,6 @@ public class JaegerQEBase {
         String operation = jsonSpan.get("operationName").textValue();
         String id = jsonSpan.get("spanID").textValue();
 
-        // TODO how to get Parent; add field for JSON?
-
-        // 1 tags. 2 Long start.  3. Long end.  4. Long duration 5. operation string
-        // 6. id String.  7 QESpan parent.  8:     SpanObj -- the span itself.
         QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null, jsonSpan);
         return qeSpan;
     }

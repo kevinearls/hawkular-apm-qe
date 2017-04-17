@@ -21,7 +21,9 @@
   <test name="Simple tests">
     <classes>
       <class name="org.hawkular.apm.qe.tests.simple.BasicSpanTest" />
-      <class name="org.hawkular.apm.qe.tests.simple.TagAndDurationTests" />
+      <!-- Re-enable these after switching all tests to JaegerQEBase -->
+      <!--class name="org.hawkular.apm.qe.tests.simple.TagAndDurationTests" />
+      <class name="org.hawkular.apm.qe.tests.simple.FirstJaegerTest" /-->
     </classes>
   </test>
 </suite>
