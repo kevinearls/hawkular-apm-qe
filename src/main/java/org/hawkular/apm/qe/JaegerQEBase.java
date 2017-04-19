@@ -55,20 +55,21 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class JaegerQEBase {
-    public static Integer JAEGER_FLUSH_INTERVAL = 100;
-    public static Integer JAEGER_MAX_PACKET_SIZE = 0;
-    public static Integer JAEGER_MAX_QUEUE_SIZE = 50;
-    public static Double JAEGER_SAMPLING_RATE = 1.0;
-    public static Integer JAEGER_PORT = 0;
-    public static String JAEGER_URL = System.getenv().getOrDefault("JAEGER_URL", "localhost");
-    public static String SERVICE_NAME = System.getenv()
-            .getOrDefault("SERVICE_NAME", "qe-automation");
+    private static Map<String, String> evs = System.getenv();
+    private static Integer JAEGER_FLUSH_INTERVAL = new Integer(evs.getOrDefault("JAEGER_FLUSH_INTERVAL", "100"));
+    private static Integer JAEGER_MAX_PACKET_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_PACKET_SIZE", "0"));
+    private static Integer JAEGER_MAX_QUEUE_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_QUEUE_SIZE", "50"));
+    private static Double JAEGER_SAMPLING_RATE = new Double(evs.getOrDefault("JAEGER_SAMPLING_RATE", "1.0"));
+    private static Integer JAEGER_PORT = new Integer(evs.getOrDefault("JAEGER_PORT", "0"));
+    private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "3001"));
+    private static String JAEGER_URL = evs.getOrDefault("JAEGER_URL", "localhost");
+    private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
 
-    public ObjectMapper jsonObjectMapper = new ObjectMapper();
+    private ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     /**
      *
-     * @return
+     * @return A tracer
      */
     public Tracer getTracer() {
         return getJaegerTracer(JAEGER_URL);
@@ -77,8 +78,8 @@ public class JaegerQEBase {
 
     /**
      *
-     * @param url
-     * @return
+     * @param url for the Jaeger server
+     * @return A Tracer
      */
     public Tracer getJaegerTracer(String url) {
         _logger.info("creating tracer with url [{}]", url);
@@ -118,12 +119,30 @@ public class JaegerQEBase {
      * requires a time in microseconds.  For convenience this method accepts milliseconds and converts.
      *
      * @param testStartTime in milliseconds
-     * @return
+     * @return A List of Traces created after the time specified.
      * @throws Exception
      */
     public List<JsonNode> getTracesSinceTestStart(long testStartTime) throws Exception {
         List<JsonNode> traces = getTraces("start=" + (testStartTime * 1000));
         return traces;
+    }
+
+
+    /**
+     * Return all of the traces created between the start and end times given.  NOTE: Times should be in
+     * milliseconds.  The Jaeger Rest API requires times in microseconds, but for convenience this method
+     * will accept milliseconds and do the conversion
+     *
+     * @param start start time in milliseconds
+     * @param end end time in milliseconds
+     * @return A List of traces created between the times specified.
+     * @throws Exception
+     */
+    public List<JsonNode> getTracesBetween(long start, long end) throws Exception {
+        String parameters = "start=" + (start * 1000) + "&end=" + (end * 1000);
+        List<JsonNode> traces = getTraces(parameters);
+        return traces;
+
     }
 
 
@@ -147,7 +166,7 @@ public class JaegerQEBase {
     public List<JsonNode> getTraces(String parameters) throws Exception {
         waitForFlush(); // TODO make sure this is necessary
         Client client = ClientBuilder.newClient();
-        String targetUrl = "http://localhost:3001/api/traces?service=" + SERVICE_NAME;
+        String targetUrl = "http://" + JAEGER_URL + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
         if (parameters != null && !parameters.trim().isEmpty()) {
             targetUrl = targetUrl + "&" + parameters;     // TODO pass parameters as Map?
         }
@@ -237,5 +256,23 @@ public class JaegerQEBase {
     public String prettyPrintJson(JsonNode json) throws JsonProcessingException {
         return jsonObjectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(json);
+    }
+
+    /**
+     * Debugging method
+     *
+     * @param traces A list of traces to print
+     * @throws Exception
+     */
+    protected void dumpAllTraces(List<JsonNode> traces) throws Exception {
+        _logger.info("Got " + traces.size() + " traces");
+
+        for (JsonNode trace : traces) {
+            _logger.info("------------------ Trace {} ------------------", trace.get("traceId"));
+            List<QESpan> qeSpans = getSpansFromTrace(trace);
+            for (QESpan qeSpan : qeSpans) {
+                _logger.info(prettyPrintJson(qeSpan.getJson()));
+            }
+        }
     }
 }

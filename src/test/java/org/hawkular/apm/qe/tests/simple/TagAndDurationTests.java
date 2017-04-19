@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.hawkular.apm.qe.JaegerQEBase;
 import org.hawkular.apm.qe.model.QESpan;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -34,17 +35,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 
+import lombok.extern.slf4j.Slf4j;
+
+
 /**
  * Created by Kevin Earls on 04 April 2017.
  */
+@Slf4j
 public class TagAndDurationTests extends JaegerQEBase {
     Tracer tracer;
     AtomicLong operationId = new AtomicLong(Instant.now().getEpochSecond());
+    long startTime;
+
+    @BeforeMethod
+    public void beforeMethod() {
+        startTime = Instant.now().toEpochMilli();
+        operationId.incrementAndGet();
+    }
+
 
     @BeforeTest
     public void setup() {
         tracer = getTracer();
-        operationId.incrementAndGet();
     }
 
     /**
@@ -52,7 +64,6 @@ public class TagAndDurationTests extends JaegerQEBase {
      */
     @Test
     public void simpleTagTest() throws Exception {
-        long startTime = System.currentTimeMillis();
         Span span = tracer.buildSpan("simpleTagTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
@@ -79,7 +90,6 @@ public class TagAndDurationTests extends JaegerQEBase {
      */
     @Test
     public void simpleDurationTest() throws Exception {
-        long startTime = System.currentTimeMillis();
         Span span = tracer.buildSpan("simpleDurationTest-" + operationId.getAndIncrement())
                 .withTag("simple", true)
                 .start();
