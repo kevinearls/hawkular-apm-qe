@@ -28,6 +28,7 @@ import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
+import org.hawkular.apm.qe.model.JaegerTracer;
 import org.hawkular.apm.qe.model.QESpan;
 
 import org.jboss.resteasy.spi.NotImplementedYetException;
@@ -35,16 +36,6 @@ import org.jboss.resteasy.spi.NotImplementedYetException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import com.uber.jaeger.metrics.Metrics;
-import com.uber.jaeger.metrics.NullStatsReporter;
-import com.uber.jaeger.metrics.StatsFactoryImpl;
-import com.uber.jaeger.reporters.RemoteReporter;
-import com.uber.jaeger.reporters.Reporter;
-import com.uber.jaeger.samplers.ProbabilisticSampler;
-import com.uber.jaeger.samplers.Sampler;
-import com.uber.jaeger.senders.Sender;
-import com.uber.jaeger.senders.UDPSender;
 
 import io.opentracing.Tracer;
 
@@ -57,10 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 public class JaegerQEBase {
     private static Map<String, String> evs = System.getenv();
     private static Integer JAEGER_FLUSH_INTERVAL = new Integer(evs.getOrDefault("JAEGER_FLUSH_INTERVAL", "100"));
-    private static Integer JAEGER_MAX_PACKET_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_PACKET_SIZE", "0"));
-    private static Integer JAEGER_MAX_QUEUE_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_QUEUE_SIZE", "50"));
-    private static Double JAEGER_SAMPLING_RATE = new Double(evs.getOrDefault("JAEGER_SAMPLING_RATE", "1.0"));
-    private static Integer JAEGER_UDP_PORT = new Integer(evs.getOrDefault("JAEGER_UDP_PORT", "5775"));
     private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "16686"));
     private static String JAEGER_SERVER_HOST = evs.getOrDefault("JAEGER_SERVER_HOST", "localhost");
     private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
@@ -72,26 +59,7 @@ public class JaegerQEBase {
      * @return A tracer
      */
     public Tracer getTracer() {
-        return getJaegerTracer(JAEGER_SERVER_HOST);
-    }
-
-
-    /**
-     *
-     * @param url for the Jaeger server
-     * @return A Tracer
-     */
-    public Tracer getJaegerTracer(String url) {
-        _logger.info("creating tracer with url [{}]", url);
-        Sender sender = new UDPSender(url, JAEGER_UDP_PORT, JAEGER_MAX_PACKET_SIZE);
-        Metrics metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
-        Reporter reporter = new RemoteReporter(sender, JAEGER_FLUSH_INTERVAL, JAEGER_MAX_QUEUE_SIZE, metrics );
-        Sampler sampler = new ProbabilisticSampler(JAEGER_SAMPLING_RATE);
-
-        Tracer tracer = new com.uber.jaeger.Tracer.Builder(SERVICE_NAME, reporter, sampler)
-                .build();
-
-        return tracer;
+        return new JaegerTracer().getTracer();
     }
 
 
