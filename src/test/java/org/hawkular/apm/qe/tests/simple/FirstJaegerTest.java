@@ -84,7 +84,6 @@ public class FirstJaegerTest extends JaegerQEBase {
         assertEquals("true", simpleTag.toString());
     }
 
-    
     /**
      * TODO Open a bug on this.
      *
