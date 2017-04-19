@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.hawkular.apm.qe.JaegerQEBase;
+import org.hawkular.apm.qe.model.JaegerRestClient;
 import org.hawkular.apm.qe.model.QESpan;
 
 import org.testng.Assert;
@@ -49,6 +50,7 @@ public class FirstJaegerTest extends JaegerQEBase {
     Tracer tracer;
     AtomicInteger operationId = new AtomicInteger(0);
     long startTime;
+    JaegerRestClient restClient = getJaegerRestClient();
 
     @BeforeMethod
     public void beforeMethod() {
@@ -74,13 +76,13 @@ public class FirstJaegerTest extends JaegerQEBase {
                 .start();
         span.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(1, traces.size(), "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
         assertEquals(spans.size(), 1, "Expected 1 span");
         QESpan qeSpan = spans.get(0);
-        _logger.debug(prettyPrintJson(qeSpan.getJson()));
+        _logger.debug(restClient.prettyPrintJson(qeSpan.getJson()));
 
         assertEquals(qeSpan.getOperation(), operationName);
 
@@ -120,7 +122,7 @@ public class FirstJaegerTest extends JaegerQEBase {
 
         parentSpan.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 1, "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
@@ -149,7 +151,7 @@ public class FirstJaegerTest extends JaegerQEBase {
             testSpan.finish();
         }
 
-        List<JsonNode> traces = getTracesBetween(startTime, end);
+        List<JsonNode> traces = restClient.getTracesBetween(startTime, end);
         assertEquals(traces.size(), 3, "Expected 3 traces");
 
         // TODO more assertions here ?
@@ -178,7 +180,7 @@ public class FirstJaegerTest extends JaegerQEBase {
         Thread.sleep(75);
         secondSpan.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 2, "Expected 2 traces");
 
         // TODO more assertions here....
@@ -219,7 +221,7 @@ public class FirstJaegerTest extends JaegerQEBase {
                 .start();
         span.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(1, traces.size(), "Expected 1 trace");
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
         assertEquals(1, spans.size(), "Expected only 1 span");
