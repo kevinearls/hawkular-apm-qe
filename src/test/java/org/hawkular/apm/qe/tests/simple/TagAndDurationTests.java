@@ -22,19 +22,17 @@ import static org.testng.Assert.assertTrue;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import io.opentracing.Tracer;
-import org.hawkular.apm.client.model.Criteria;
 import org.hawkular.apm.qe.JaegerQEBase;
 import org.hawkular.apm.qe.model.QESpan;
-import org.hawkular.apm.qe.tests.TestBase;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.opentracing.Span;
+import io.opentracing.Tracer;
 
 /**
  * Created by Kevin Earls on 04 April 2017.
