@@ -60,9 +60,9 @@ public class JaegerQEBase {
     private static Integer JAEGER_MAX_PACKET_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_PACKET_SIZE", "0"));
     private static Integer JAEGER_MAX_QUEUE_SIZE = new Integer(evs.getOrDefault("JAEGER_MAX_QUEUE_SIZE", "50"));
     private static Double JAEGER_SAMPLING_RATE = new Double(evs.getOrDefault("JAEGER_SAMPLING_RATE", "1.0"));
-    private static Integer JAEGER_PORT = new Integer(evs.getOrDefault("JAEGER_PORT", "0"));
-    private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "3001"));
-    private static String JAEGER_URL = evs.getOrDefault("JAEGER_URL", "localhost");
+    private static Integer JAEGER_UDP_PORT = new Integer(evs.getOrDefault("JAEGER_UDP_PORT", "5775"));
+    private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "16686"));
+    private static String JAEGER_SERVER_HOST = evs.getOrDefault("JAEGER_SERVER_HOST", "localhost");
     private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
 
     private ObjectMapper jsonObjectMapper = new ObjectMapper();
@@ -72,7 +72,7 @@ public class JaegerQEBase {
      * @return A tracer
      */
     public Tracer getTracer() {
-        return getJaegerTracer(JAEGER_URL);
+        return getJaegerTracer(JAEGER_SERVER_HOST);
     }
 
 
@@ -83,7 +83,7 @@ public class JaegerQEBase {
      */
     public Tracer getJaegerTracer(String url) {
         _logger.info("creating tracer with url [{}]", url);
-        Sender sender = new UDPSender(url, JAEGER_PORT, JAEGER_MAX_PACKET_SIZE);
+        Sender sender = new UDPSender(url, JAEGER_UDP_PORT, JAEGER_MAX_PACKET_SIZE);
         Metrics metrics = new Metrics(new StatsFactoryImpl(new NullStatsReporter()));
         Reporter reporter = new RemoteReporter(sender, JAEGER_FLUSH_INTERVAL, JAEGER_MAX_QUEUE_SIZE, metrics );
         Sampler sampler = new ProbabilisticSampler(JAEGER_SAMPLING_RATE);
@@ -166,7 +166,7 @@ public class JaegerQEBase {
     public List<JsonNode> getTraces(String parameters) throws Exception {
         waitForFlush(); // TODO make sure this is necessary
         Client client = ClientBuilder.newClient();
-        String targetUrl = "http://" + JAEGER_URL + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
+        String targetUrl = "http://" + JAEGER_SERVER_HOST + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
         if (parameters != null && !parameters.trim().isEmpty()) {
             targetUrl = targetUrl + "&" + parameters;     // TODO pass parameters as Map?
         }
