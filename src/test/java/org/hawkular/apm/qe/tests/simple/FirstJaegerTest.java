@@ -28,6 +28,7 @@ import org.hawkular.apm.qe.JaegerQEBase;
 import org.hawkular.apm.qe.model.QESpan;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -41,16 +42,23 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by Kevin Earls on 14/04/2017.
+ *
  */
 @Slf4j
 public class FirstJaegerTest extends JaegerQEBase {
     Tracer tracer;
     AtomicInteger operationId = new AtomicInteger(0);
+    long startTime;
+
+    @BeforeMethod
+    public void beforeMethod() {
+        startTime = Instant.now().toEpochMilli();
+        operationId.incrementAndGet();
+    }
 
     @BeforeTest
     public void setup() {
         tracer = getTracer();
-        operationId.incrementAndGet();
     }
 
     /**
@@ -60,29 +68,124 @@ public class FirstJaegerTest extends JaegerQEBase {
      */
     @Test
     public void writeASingleSpanTest() throws Exception {
-        long startTime = Instant.now().toEpochMilli();
         String operationName = "writeASingleSpanTest" + operationId.getAndIncrement();
         Span span = tracer.buildSpan(operationName)
                 .withTag("simple", true)
                 .start();
-//        span.log("event " + operationId);
         span.finish();
 
         List<JsonNode> traces = getTracesSinceTestStart(startTime);
         assertEquals(1, traces.size(), "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
-        assertEquals(1, spans.size(), "Expected 1 span");
+        assertEquals(spans.size(), 1, "Expected 1 span");
         QESpan qeSpan = spans.get(0);
-        _logger.info(prettyPrintJson(qeSpan.getJson()));
+        _logger.debug(prettyPrintJson(qeSpan.getJson()));
 
         assertEquals(qeSpan.getOperation(), operationName);
 
-        Map<String, Object> tags = qeSpan.getTags();        // TODO how to check tags for size?
+        Map<String, Object> tags = qeSpan.getTags();
         Object simpleTag = tags.get("simple");
         assertNotNull(simpleTag);
         assertEquals("true", simpleTag.toString());
     }
+
+
+    /**
+     * Simple test of creating a span with children
+     *
+     * @throws Exception
+     */
+    @Test
+    public void spanWithChildrenTest() throws Exception {
+        String operationName = "spanWithChildrenTest" + operationId.getAndIncrement();
+        Span parentSpan = tracer.buildSpan(operationName)
+                .withTag("simple", true)
+                .start();
+
+        Span childSpan1 = tracer.buildSpan(operationName + "-child1")
+                .asChildOf(parentSpan)
+                .withTag("child", 1)
+                .start();
+        Thread.sleep(100);
+
+        Span childSpan2 = tracer.buildSpan(operationName + "-child2")
+                .asChildOf(parentSpan)
+                .withTag("child", 2)
+                .start();
+        Thread.sleep(50);
+
+        childSpan1.finish();
+        childSpan2.finish();
+
+        parentSpan.finish();
+
+        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        assertEquals(traces.size(), 1, "Expected 1 trace");
+
+        List<QESpan> spans = getSpansFromTrace(traces.get(0));
+        assertEquals(spans.size(), 3, "Expected 1 spans");
+        // TODO validate parent child structure, operationNames, etc.
+    }
+
+
+    /**
+     * A simgple test of the start and end options when fetching traces.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testStartEndTest() throws Exception {
+        String operationName = "startEndTest" + operationId.getAndIncrement();
+        long end = 0;
+        for (int i=0; i < 5; i++) {
+            if (i == 3) {
+                end = System.currentTimeMillis();
+                Thread.sleep(50);
+            }
+            Span testSpan = tracer.buildSpan(operationName)
+                    .withTag("startEndTestSpan", i)
+                    .start();
+            testSpan.finish();
+        }
+
+        List<JsonNode> traces = getTracesBetween(startTime, end);
+        assertEquals(traces.size(), 3, "Expected 3 traces");
+
+        // TODO more assertions here ?
+    }
+
+
+    /**
+     * This should create 2 traces as Jaeger closes a trace when finish() is called
+     * on the top-level span
+     *
+     * @throws Exception
+     */
+    @Test
+    public void successiveSpansTest() throws Exception {
+        String operationName = "successiveSpansTest" + operationId.getAndIncrement();
+        Span firstSpan = tracer.buildSpan(operationName)
+                .withTag("firstSpan", true)
+                .start();
+        Thread.sleep(50);
+        firstSpan.finish();
+
+        operationName = "successiveSpansTest" + operationId.getAndIncrement();
+        Span secondSpan = tracer.buildSpan(operationName)
+                .withTag("secondSpan", true)
+                .start();
+        Thread.sleep(75);
+        secondSpan.finish();
+
+        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        assertEquals(traces.size(), 2, "Expected 2 traces");
+
+        // TODO more assertions here....
+        //dumpAllTraces(traces);
+
+    }
+
 
     /**
      * TODO Open a bug on this.
@@ -108,7 +211,6 @@ public class FirstJaegerTest extends JaegerQEBase {
      */
     @Test(enabled = false)
     public void tagsShouldBeTypedTest() throws Exception {
-        long startTime = Instant.now().toEpochMilli();
         String operationName = "tagsShouldBeTypedTest";
         Span span = tracer.buildSpan(operationName)
                 .withTag("booleanTag", true)
