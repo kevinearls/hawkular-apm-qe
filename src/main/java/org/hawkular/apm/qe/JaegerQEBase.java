@@ -22,20 +22,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-
+import org.hawkular.apm.qe.model.JaegerRestClient;
 import org.hawkular.apm.qe.model.JaegerTracer;
 import org.hawkular.apm.qe.model.QESpan;
 
 import org.jboss.resteasy.spi.NotImplementedYetException;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.opentracing.Tracer;
 
@@ -46,14 +39,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class JaegerQEBase {
-    private static Map<String, String> evs = System.getenv();
-    private static Integer JAEGER_FLUSH_INTERVAL = new Integer(evs.getOrDefault("JAEGER_FLUSH_INTERVAL", "100"));
-    private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "16686"));
-    private static String JAEGER_SERVER_HOST = evs.getOrDefault("JAEGER_SERVER_HOST", "localhost");
-    private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
-
-    private ObjectMapper jsonObjectMapper = new ObjectMapper();
-
     /**
      *
      * @return A tracer
@@ -62,107 +47,16 @@ public class JaegerQEBase {
         return new JaegerTracer().getTracer();
     }
 
-
-    /**
-     * Make sure spans are flushed before trying to retrieve them
-     */
-    public void waitForFlush() {
-        try {
-            Thread.sleep(JAEGER_FLUSH_INTERVAL);   // TODO is this adequate?
-        } catch (InterruptedException e) {
-        }
+    public JaegerRestClient getJaegerRestClient() {
+        return new JaegerRestClient();
     }
 
 
     /**
-     * Get all traces from the server
-     */
-    public List<JsonNode> getTraces() throws Exception {
-        return getTraces("");
-    }
-
-
-    /**
-     * Return all of the traces created since the start time given.  NOTE: The Jaeger Rest API
-     * requires a time in microseconds.  For convenience this method accepts milliseconds and converts.
-     *
-     * @param testStartTime in milliseconds
-     * @return A List of Traces created after the time specified.
-     * @throws Exception
-     */
-    public List<JsonNode> getTracesSinceTestStart(long testStartTime) throws Exception {
-        List<JsonNode> traces = getTraces("start=" + (testStartTime * 1000));
-        return traces;
-    }
-
-
-    /**
-     * Return all of the traces created between the start and end times given.  NOTE: Times should be in
-     * milliseconds.  The Jaeger Rest API requires times in microseconds, but for convenience this method
-     * will accept milliseconds and do the conversion
-     *
-     * @param start start time in milliseconds
-     * @param end end time in milliseconds
-     * @return A List of traces created between the times specified.
-     * @throws Exception
-     */
-    public List<JsonNode> getTracesBetween(long start, long end) throws Exception {
-        String parameters = "start=" + (start * 1000) + "&end=" + (end * 1000);
-        List<JsonNode> traces = getTraces(parameters);
-        return traces;
-
-    }
-
-
-    /**
-     * TODO: Figure out the Jaeger REST Api.  Key code can be found
-     *
-     *  https://github.com/uber/jaeger/blob/master/cmd/query/app/handler.go#L120-L130 with parameter info
-     *  https://github.com/uber/jaeger/blob/master/cmd/query/app/query_parser.go#L68-L81
-     *
-     * GET all traces for a service: http://localhost:3001/api/traces?service=something
-     * GET a Trace by id: http://localhost:3001/api/traces/23652df68bd54e15
-     * GET services http://localhost:3001/api/services
-     *
-     * GET after a specific time: http://localhost:3001/api/traces?service=something&start=1492098196598
-     * NOTE: time is in MICROseconds.
-     *
-     *
-     *
-     * @throws Exception
-     */
-    public List<JsonNode> getTraces(String parameters) throws Exception {
-        waitForFlush(); // TODO make sure this is necessary
-        Client client = ClientBuilder.newClient();
-        String targetUrl = "http://" + JAEGER_SERVER_HOST + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
-        if (parameters != null && !parameters.trim().isEmpty()) {
-            targetUrl = targetUrl + "&" + parameters;     // TODO pass parameters as Map?
-        }
-        _logger.debug("using targetURL [{}]", targetUrl);
-
-        WebTarget target = client.target(targetUrl);
-
-        Invocation.Builder builder = target.request();
-        builder.accept(MediaType.APPLICATION_XML);
-        String result = builder.get(String.class);
-
-        JsonNode jsonPayload = jsonObjectMapper.readTree(result);
-        JsonNode data = jsonPayload.get("data");
-        Iterator<JsonNode> traceIterator = data.iterator();
-
-        List<JsonNode> traces = new ArrayList<>();
-        while (traceIterator.hasNext()) {
-            traces.add(traceIterator.next());
-        }
-
-        return traces;
-    }
-
-
-    /**
-     * Convert all JSON Spans in the Trace to QESpans
+     * Convert all JSON Spans in the trace returned by the Jaeeger ReEST API to QESpans
      *
      * TODO: Figure out how to deal with parents
+     * TODO: should this be here, or in the client
      *
      * @param trace
      * @return
@@ -181,7 +75,7 @@ public class JaegerQEBase {
 
 
     /**
-     * Convert a Span in JSON returned from the Rest API to a QESpan
+     * Convert a Span in JSON returned from the Jaeger REST API to a QESpan
       * @param jsonSpan
      * @return
      */
@@ -212,35 +106,5 @@ public class JaegerQEBase {
 
         QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null, jsonSpan);
         return qeSpan;
-    }
-
-
-    /**
-     * Return a formatted JSON String
-     * @param json
-     * @return
-     * @throws JsonProcessingException
-     */
-    public String prettyPrintJson(JsonNode json) throws JsonProcessingException {
-        return jsonObjectMapper.writerWithDefaultPrettyPrinter()
-                .writeValueAsString(json);
-    }
-
-    /**
-     * Debugging method
-     *
-     * @param traces A list of traces to print
-     * @throws Exception
-     */
-    protected void dumpAllTraces(List<JsonNode> traces) throws Exception {
-        _logger.info("Got " + traces.size() + " traces");
-
-        for (JsonNode trace : traces) {
-            _logger.info("------------------ Trace {} ------------------", trace.get("traceId"));
-            List<QESpan> qeSpans = getSpansFromTrace(trace);
-            for (QESpan qeSpan : qeSpans) {
-                _logger.info(prettyPrintJson(qeSpan.getJson()));
-            }
-        }
     }
 }

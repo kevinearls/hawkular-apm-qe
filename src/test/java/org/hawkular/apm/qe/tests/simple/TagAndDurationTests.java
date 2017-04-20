@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.hawkular.apm.qe.JaegerQEBase;
+import org.hawkular.apm.qe.model.JaegerRestClient;
 import org.hawkular.apm.qe.model.QESpan;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
@@ -46,6 +47,7 @@ public class TagAndDurationTests extends JaegerQEBase {
     Tracer tracer;
     AtomicLong operationId = new AtomicLong(Instant.now().getEpochSecond());
     long startTime;
+    JaegerRestClient restClient = getJaegerRestClient();
 
     @BeforeMethod
     public void beforeMethod() {
@@ -69,7 +71,7 @@ public class TagAndDurationTests extends JaegerQEBase {
                 .start();
         span.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 1, "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
@@ -97,7 +99,7 @@ public class TagAndDurationTests extends JaegerQEBase {
         Thread.sleep(expectedMinimumDuration);
         span.finish();
 
-        List<JsonNode> traces = getTracesSinceTestStart(startTime);
+        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 1, "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
