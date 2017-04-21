@@ -26,8 +26,8 @@
   <logger level="INFO" name="org.jboss.resteasy" />
   <logger level="INFO" name="org.jboss.logging" />
   <logger level="WARN" name="ch.qos.logback"/>
-  <logger level="DEBUG" name="org.hawkular.apm.client.api.recorder"/>
-
+  <logger level="DEBUG" name="org.hawkular.apm.client"/>
+  <logger level="INFO" name="org.hawkular.client.core"/>
 
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />

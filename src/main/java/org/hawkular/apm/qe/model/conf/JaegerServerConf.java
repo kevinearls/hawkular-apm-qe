@@ -14,18 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.tracer;
+package org.hawkular.apm.qe.model.conf;
 
-import io.opentracing.Tracer;
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public class RestApi implements ITracer {
+@Data
+@Builder
+@ToString
+public class JaegerServerConf {
+    private String protocol = "http";
+    private String host;
+    private Integer restPort;
 
-    @Override
-    public Tracer getTracer() {
-        throw new RuntimeException("This feature not implemente yet.");
+    public String getProtocol() {
+        if (protocol == null) {
+            return "http";
+        }
+        return protocol;
     }
 
+    public String getUrl() {
+        return protocol + "://" + host + ":" + restPort;
+    }
 }

@@ -14,21 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.model;
+package org.hawkular.apm.qe.model.conf;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-@Data
 @Builder
-public class ApmServerConf {
-    private String tenant;
-    private String url;
-    private String username;
-    private String password;
-    private String serviceName;
-    private String buildStamp;
+@Data
+@ToString
+public class JaegerAgentConf {
+    private String host;
+    private Integer port;
+    private Integer flushInterval;
+    private Integer packetSize;
+    private Integer queueSize;
+    private Double samplingRate;
 }
