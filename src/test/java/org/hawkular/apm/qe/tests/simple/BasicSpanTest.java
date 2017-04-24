@@ -30,9 +30,7 @@ import io.opentracing.Span;
  * @author Jeeva Kandasamy (jkandasa)
  */
 public class BasicSpanTest extends TestBase {
-
-    // TODO convert to work with Jaeger
-    @Test(priority = 0, enabled = false)
+    @Test(priority = 0)
     public void rootSpantest() throws InterruptedException {
         /*Description: Create root/single span send it to server via tracer
          * validate it from server.
@@ -74,8 +72,7 @@ public class BasicSpanTest extends TestBase {
 
     }
 
-    // TODO convert to work with Jaeger
-    @Test(priority = 1, enabled = false)
+    @Test(priority = 1)
     public void childSpantest() throws InterruptedException {
         /*Description: Create parent span and child span send it to server via tracer
          * validate it from server.

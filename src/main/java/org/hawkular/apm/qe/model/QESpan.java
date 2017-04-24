@@ -16,20 +16,20 @@
  */
 package org.hawkular.apm.qe.model;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
+ * @author kearls
  */
 @Getter
 @ToString
@@ -40,10 +40,11 @@ public class QESpan implements Span {
     private Long end;
     private Long duration;
     private String operation;
-    private String id;
+    private String spanId;
     private QESpan parent;
     private Span spanObj;
-    private JsonNode json;
+    private static final List<String> TAGS_EQUAL_IGNORE_LIST = Arrays.asList("errZeroParentID", "sampler.type",
+            "sampler.param");
 
     public Span setOperationName(String operation) {
         this.operation = operation;
@@ -53,6 +54,22 @@ public class QESpan implements Span {
         return this;
     }
 
+    public void setParent(QESpan parent) {
+        throwOnlineTracerException();
+        this.parent = parent;
+    }
+
+    public void setSpanId(String spanId) {
+        throwOnlineTracerException();
+        this.spanId = spanId;
+    }
+
+    private void throwOnlineTracerException() {
+        if (spanObj != null) {
+            throw new RuntimeException(
+                    "Tracer has been set. 'setParent(*)' method used to update for offline instance");
+        }
+    }
 
     @Deprecated
     @Override
@@ -60,7 +77,6 @@ public class QESpan implements Span {
         spanObj.log(event, payload);
         return this;
     }
-
 
     @Deprecated
     @Override
@@ -93,13 +109,11 @@ public class QESpan implements Span {
         return this;
     }
 
-
     @Override
     public Span log(Map<String, ?> fields) {
         spanObj.log(fields);
         return this;
     }
-
 
     @Override
     public Span log(long timestampMicroseconds, Map<String, ?> fields) {
@@ -107,13 +121,11 @@ public class QESpan implements Span {
         return this;
     }
 
-
     @Override
     public Span log(String event) {
         spanObj.log(event);
         return this;
     }
-
 
     @Override
     public Span log(long timestampMicroseconds, String event) {
@@ -121,13 +133,11 @@ public class QESpan implements Span {
         return this;
     }
 
-
     @Override
     public Span setBaggageItem(String key, String value) {
-       spanObj.setBaggageItem(key, value);
-       return this;
+        spanObj.setBaggageItem(key, value);
+        return this;
     }
-
 
     @Override
     public String getBaggageItem(String key) {
@@ -140,7 +150,6 @@ public class QESpan implements Span {
             spanObj.finish(end);
         }
     }
-
 
     @Override
     public SpanContext context() {
@@ -170,10 +179,6 @@ public class QESpan implements Span {
         return duration;
     }
 
-    public JsonNode getJson() {
-        return json;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == null || !QESpan.class.isAssignableFrom(obj.getClass())) {
@@ -189,21 +194,25 @@ public class QESpan implements Span {
         if (getDuration().compareTo(other.getDuration()) != 0) {
             return false;
         }
+        /*
         if (!getTags().keySet().equals(other.getTags().keySet())) {
             return false;
         }
+        */
         for (String name : getTags().keySet()) {
-            if (getTags().get(name) instanceof Number) {
-                if (!getTags().get(name).toString().equals(other.getTags().get(name).toString())) {
-                    return false;
-                }
-            } else if (tags.get(name) instanceof Boolean) {
-                if (getTags().get(name) != other.getTags().get(name)) {
-                    return false;
-                }
-            } else {
-                if (!getTags().get(name).equals(other.getTags().get(name))) {
-                    return false;
+            if (!TAGS_EQUAL_IGNORE_LIST.contains(name)) {
+                if (getTags().get(name) instanceof Number) {
+                    if (!getTags().get(name).toString().equals(other.getTags().get(name).toString())) {
+                        return false;
+                    }
+                } else if (tags.get(name) instanceof Boolean) {
+                    if (getTags().get(name) != other.getTags().get(name)) {
+                        return false;
+                    }
+                } else {
+                    if (!getTags().get(name).equals(other.getTags().get(name))) {
+                        return false;
+                    }
                 }
             }
         }

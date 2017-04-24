@@ -16,95 +16,106 @@
  */
 package org.hawkular.apm.qe;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.net.URISyntaxException;
 import java.util.Map;
 
-import org.hawkular.apm.qe.model.JaegerRestClient;
-import org.hawkular.apm.qe.model.JaegerTracer;
-import org.hawkular.apm.qe.model.QESpan;
+import org.apache.commons.lang3.RandomUtils;
+import org.hawkular.apm.qe.model.conf.JaegerAgentConf;
+import org.hawkular.apm.qe.model.conf.JaegerConf;
+import org.hawkular.apm.qe.model.conf.JaegerServerConf;
+import org.hawkular.apm.qe.tracer.ITracer;
+import org.hawkular.apm.qe.tracer.JaegerOpenTracing;
 
-import org.jboss.resteasy.spi.NotImplementedYetException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.opentracing.Tracer;
-
-import lombok.extern.slf4j.Slf4j;
+import com.uber.jaeger.rest.JaegerRestClient;
 
 /**
- * @author Kevin Earls 14 April 2017
+ * @author Jeeva Kandasamy (jkandasa)
+ * @author kearls
  */
-@Slf4j
 public class JaegerQEBase {
-    /**
-     *
-     * @return A tracer
-     */
-    public Tracer getTracer() {
-        return new JaegerTracer().getTracer();
+    private static Map<String, String> evs = System.getenv();
+    private static Integer JAEGER_AGENT_FLUSH_INTERVAL = new Integer(evs.getOrDefault("JAEGER_AGENT_FLUSH_INTERVAL",
+            "100"));
+    private static Integer JAEGER_AGENT_PACKET_SIZE = new Integer(evs.getOrDefault("JAEGER_AGENT_PACKET_SIZE", "0"));
+    private static Integer JAEGER_AGENT_QUEUE_SIZE = new Integer(evs.getOrDefault("JAEGER_AGENT_QUEUE_SIZE", "50"));
+    private static Double JAEGER_AGENT_SAMPLING_RATE = new Double(
+            evs.getOrDefault("JAEGER_AGENT_SAMPLING_RATE", "1.0"));
+    private static Integer JAEGER_AGENT_PORT = new Integer(evs.getOrDefault("JAEGER_AGENT_PORT", "5775"));
+    private static String JAEGER_SERVER_HOST = evs.getOrDefault("JAEGER_SERVER_HOST", "localhost");
+    private static Integer JAEGER_SERVER_REST_PORT = new Integer(evs.getOrDefault("JAEGER_SERVER_REST_PORT", "16686"));
+    private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
+
+    public enum INSTRUMENTATION_TYPE {
+        JAEGER_OPENTRACING,
+        ZIPKIN_OPENTRACING
     }
 
-    public JaegerRestClient getJaegerRestClient() {
-        return new JaegerRestClient();
+    private static JaegerAgentConf jaegerAgentConf = JaegerAgentConf.builder()
+            .host(JAEGER_SERVER_HOST)
+            .port(JAEGER_AGENT_PORT)
+            .packetSize(JAEGER_AGENT_PACKET_SIZE)
+            .queueSize(JAEGER_AGENT_QUEUE_SIZE)
+            .samplingRate(JAEGER_AGENT_SAMPLING_RATE)
+            .flushInterval(JAEGER_AGENT_FLUSH_INTERVAL)
+            .build();
+
+    private static JaegerServerConf jaegerServerConf = JaegerServerConf.builder()
+            .host(JAEGER_SERVER_HOST)
+            .restPort(JAEGER_SERVER_REST_PORT)
+            .protocol("http")
+            .build();
+
+    private static JaegerConf jaegerConf = JaegerConf.builder()
+            .server(jaegerServerConf)
+            .agent(jaegerAgentConf)
+            .serviceName(SERVICE_NAME)
+            .build();
+    private static JaegerRestClient jaegerRestClient = null;
+
+    public static JaegerConf getJaegerConf() {
+        return jaegerConf;
     }
 
-
-    /**
-     * Convert all JSON Spans in the trace returned by the Jaeeger ReEST API to QESpans
-     *
-     * TODO: Figure out how to deal with parents
-     * TODO: should this be here, or in the client
-     *
-     * @param trace
-     * @return
-     */
-    public List<QESpan> getSpansFromTrace(JsonNode trace) {
-        List<QESpan> spans = new ArrayList<>();
-        Iterator<JsonNode> spanIterator = trace.get("spans").iterator();
-
-        while (spanIterator.hasNext()) {
-            JsonNode jsonSpan = spanIterator.next();
-            QESpan span = createSpanFromJsonNode(jsonSpan);
-            spans.add(span);
+    public static ITracer getInstrumentation(INSTRUMENTATION_TYPE type) {
+        switch (type) {
+            case JAEGER_OPENTRACING:
+                return JaegerOpenTracing.getInstance();
+            default:
+                throw new RuntimeException("Not implemented yet");
         }
-        return spans;
     }
 
-
-    /**
-     * Convert a Span in JSON returned from the Jaeger REST API to a QESpan
-      * @param jsonSpan
-     * @return
-     */
-    public QESpan createSpanFromJsonNode(JsonNode jsonSpan) {
-        Map<String, Object> tags = new HashMap<>();
-
-        JsonNode jsonTags = jsonSpan.get("tags");
-        Iterator<JsonNode> jsonTagsIterator = jsonTags.iterator();
-        while (jsonTagsIterator.hasNext()) {
-            JsonNode jsonTag = jsonTagsIterator.next();
-            String type = jsonTag.get("type").asText();
-            if (type.equals("string")) {
-                String key = jsonTag.get("key").asText();
-                String value = jsonTag.get("value").asText();
-                tags.put(key, value);
-            } else {
-                // FIXME tags should have type of String, Boolean, or Integer;
-                throw new NotImplementedYetException("Update to handle Numbers and Booleans");
-            }
-            tags.put(jsonTag.get("key").textValue(), jsonTag.get("value").textValue());
+    public static JaegerRestClient getRestClient() throws URISyntaxException {
+        if (jaegerRestClient == null) {
+            jaegerRestClient = JaegerRestClient.builder()
+                    .uri(getJaegerConf().getServer().getUrl())
+                    .build();
         }
-
-        Long start = jsonSpan.get("startTime").asLong();
-        Long duration = jsonSpan.get("duration").asLong();
-        Long end = start + duration;
-        String operation = jsonSpan.get("operationName").textValue();
-        String id = jsonSpan.get("spanID").textValue();
-
-        QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null, jsonSpan);
-        return qeSpan;
+        return jaegerRestClient;
     }
+
+    public long randomLong() {
+        return randomLong(0L, 100000L);
+    }
+
+    public long randomLong(long endExclusive) {
+        return randomLong(0L, endExclusive);
+    }
+
+    public long randomLong(long startInclusive, long endExclusive) {
+        return RandomUtils.nextLong(startInclusive, endExclusive);
+    }
+
+    public int randomInt() {
+        return randomInt(0, 1000);
+    }
+
+    public int randomInt(int endExclusive) {
+        return randomInt(0, endExclusive);
+    }
+
+    public int randomInt(int startInclusive, int endExclusive) {
+        return RandomUtils.nextInt(startInclusive, endExclusive);
+    }
+
 }

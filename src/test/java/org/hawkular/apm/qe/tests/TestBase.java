@@ -18,10 +18,11 @@ package org.hawkular.apm.qe.tests;
 
 import java.net.URISyntaxException;
 
-import org.hawkular.apm.client.HawkularApmClient;
-import org.hawkular.apm.qe.ApmQEBase;
+import org.hawkular.apm.qe.JaegerQEBase;
 import org.hawkular.apm.qe.model.QETracer;
 import org.testng.annotations.BeforeSuite;
+
+import com.uber.jaeger.rest.JaegerRestClient;
 
 import io.opentracing.Tracer;
 import lombok.extern.slf4j.Slf4j;
@@ -30,10 +31,10 @@ import lombok.extern.slf4j.Slf4j;
  * @author Jeeva Kandasamy (jkandasa)
  */
 @Slf4j
-public class TestBase extends ApmQEBase {
+public class TestBase extends JaegerQEBase {
     private static Tracer _tracer = null;
     private static QETracer _qeTracer = null;
-    private static HawkularApmClient _restClient = null;
+    private static JaegerRestClient _restClient = null;
     private static IServer _server = null;
 
     //Returns tracer instance to test classes
@@ -47,7 +48,7 @@ public class TestBase extends ApmQEBase {
     }
 
     //Returns rest client instance to test classes
-    public HawkularApmClient restClient() {
+    public JaegerRestClient restClient() {
         return _restClient;
     }
 
@@ -58,15 +59,15 @@ public class TestBase extends ApmQEBase {
 
     @BeforeSuite
     public void loadRequiredinstance() throws URISyntaxException {
-        _tracer = ApmQEBase.getInstrumentation(INSTRUMENTATION_TYPE.OPEN_TRACING).getTracer();
+        _tracer = JaegerQEBase.getInstrumentation(INSTRUMENTATION_TYPE.JAEGER_OPENTRACING).getTracer();
         _qeTracer = new QETracer(tracer());
-        _restClient = ApmQEBase.getRestClient();
-        _server = new RestApiWrapper(restClient());
+        _restClient = JaegerQEBase.getRestClient();
+        _server = new JaegerRestApiWrapper(restClient());
     }
 
     public void sleep() {
-        //Give some seconds to APMTracer-BatchTraceRecorder to send pending spans/traces
-        sleep(1000L * 10);
+        //Give some delay to update data on Jaeger server from client
+        sleep(getJaegerConf().getAgent().getFlushInterval() * 10);
     }
 
     public void sleep(long milliseconds) {

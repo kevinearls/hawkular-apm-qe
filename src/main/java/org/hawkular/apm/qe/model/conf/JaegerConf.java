@@ -14,24 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hawkular.apm.qe.tests;
+package org.hawkular.apm.qe.model.conf;
 
-import java.util.List;
-
-import org.hawkular.apm.qe.model.QESpan;
-
-import com.uber.jaeger.rest.model.Criteria;
+import lombok.Builder;
+import lombok.Data;
+import lombok.ToString;
 
 /**
  * @author Jeeva Kandasamy (jkandasa)
  */
-public interface IServer {
-
-    QESpan getSpan(Criteria criteria);
-
-    List<QESpan> listSpan(Criteria criteria);
-
-    List<QESpan> listSpan(String operation, Long startTime, Long endTime);
-
-    int traceCount(Criteria criteria);
+@Data
+@ToString
+@Builder
+public class JaegerConf {
+    private JaegerServerConf server;
+    private JaegerAgentConf agent;
+    private String serviceName;
 }

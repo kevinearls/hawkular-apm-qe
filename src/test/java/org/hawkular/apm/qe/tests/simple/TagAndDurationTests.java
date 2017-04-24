@@ -20,45 +20,33 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.hawkular.apm.qe.JaegerQEBase;
-import org.hawkular.apm.qe.model.JaegerRestClient;
 import org.hawkular.apm.qe.model.QESpan;
+import org.hawkular.apm.qe.tests.TestBase;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.uber.jaeger.rest.model.Criteria;
 
 import io.opentracing.Span;
-import io.opentracing.Tracer;
-
-import lombok.extern.slf4j.Slf4j;
-
 
 /**
  * Created by Kevin Earls on 04 April 2017.
  */
-@Slf4j
-public class TagAndDurationTests extends JaegerQEBase {
-    Tracer tracer;
+public class TagAndDurationTests extends TestBase {
     AtomicLong operationId = new AtomicLong(Instant.now().getEpochSecond());
     long startTime;
-    JaegerRestClient restClient = getJaegerRestClient();
+    List<QESpan> spansExpected = new ArrayList<QESpan>();
 
     @BeforeMethod
     public void beforeMethod() {
         startTime = Instant.now().toEpochMilli();
         operationId.incrementAndGet();
-    }
-
-
-    @BeforeTest
-    public void setup() {
-        tracer = getTracer();
+        spansExpected.clear();
     }
 
     /**
@@ -66,22 +54,25 @@ public class TagAndDurationTests extends JaegerQEBase {
      */
     @Test
     public void simpleTagTest() throws Exception {
-        Span span = tracer.buildSpan("simpleTagTest-" + operationId.getAndIncrement())
+        String operationName = "simpleTagTest-" + operationId.getAndIncrement();
+        Span span = qeTracer().buildSpan(operationName)
                 .withTag("simple", true)
                 .start();
+        spansExpected.add((QESpan) span);
         span.finish();
+        sleep();
 
-        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
-        assertEquals(traces.size(), 1, "Expected 1 trace");
+        Criteria criteria = Criteria.builder().operation(operationName).start(startTime).build();
+        assertEquals(server().traceCount(criteria), 1, "Expected 1 trace");
 
-        List<QESpan> spans = getSpansFromTrace(traces.get(0));
-        assertEquals(1, spans.size(), "Expected 1 span");
+        List<QESpan> spans = server().listSpan(criteria);
+        assertEquals(spans.size(), spansExpected.size(), "Recieved spans: " + spans);
         QESpan receivedSpan = spans.get(0);
 
         Map<String, Object> tags = receivedSpan.getTags();
         //assertEquals(1, tags.size(), "Expected 1 tag");    // TODO
         String simpleTag = (String) tags.get("simple");
-        assertEquals(simpleTag, "true");
+        assertEquals(simpleTag, "true", receivedSpan.toString());
     }
 
     /**
@@ -92,22 +83,26 @@ public class TagAndDurationTests extends JaegerQEBase {
      */
     @Test
     public void simpleDurationTest() throws Exception {
-        Span span = tracer.buildSpan("simpleDurationTest-" + operationId.getAndIncrement())
+        String operationName = "simpleDurationTest-" + operationId.getAndIncrement();
+        Span span = qeTracer().buildSpan(operationName)
                 .withTag("simple", true)
                 .start();
+        spansExpected.add((QESpan) span);
         long expectedMinimumDuration = 100;
-        Thread.sleep(expectedMinimumDuration);
+        sleep(expectedMinimumDuration);
         span.finish();
+        sleep();
 
-        List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
-        assertEquals(traces.size(), 1, "Expected 1 trace");
+        Criteria criteria = Criteria.builder().operation(operationName).start(startTime).build();
+        assertEquals(server().traceCount(criteria), 1, "Expected 1 trace");
 
-        List<QESpan> spans = getSpansFromTrace(traces.get(0));
-        assertEquals(spans.size(), 1, "Expected 1 span");
+        List<QESpan> spans = server().listSpan(criteria);
+        assertEquals(spans.size(), spansExpected.size(), "Expected 1 span");
         QESpan receivedSpan = spans.get(0);
 
-        long actualDuration = receivedSpan.getDuration() / 1000; // Duration is stored in microseconds
+        long expectedDuration = expectedMinimumDuration * 1000L;
 
-        assertTrue(actualDuration >= expectedMinimumDuration, actualDuration + " should be at least " + expectedMinimumDuration);
+        assertTrue(receivedSpan.getDuration() >= expectedDuration, "Expected duration: " + expectedDuration + ", "
+                + receivedSpan);
     }
 }

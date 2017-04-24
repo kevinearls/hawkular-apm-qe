@@ -32,8 +32,7 @@
 
   <properties>
     <version.io.opentracing>0.20.10</version.io.opentracing>
-    <version.org.hawkular.apm.java.client>0.0.1-SNAPSHOT</version.org.hawkular.apm.java.client>
-    <version.org.hawkular.apm>0.14.3.Final</version.org.hawkular.apm>
+    <version.com.uber.jaeger.rest-client>0.0.1-SNAPSHOT</version.com.uber.jaeger.rest-client>
     <version.org.projectlombok>1.16.14</version.org.projectlombok>
     <version.jaeger>0.17.0</version.jaeger>
     <version.org.slf4j>1.7.25</version.org.slf4j>
@@ -48,32 +47,11 @@
       <version>${version.io.opentracing}</version>
     </dependency>
 
-    <!-- Hawkular APM java client: https://github.com/Hawkular-QE/hawkular-apm-client-java -->
+    <!-- Jaeger rest java client: https://github.com/Hawkular-QE/jaeger-rest-client-java -->
     <dependency>
-      <groupId>org.hawkular.apm.client</groupId>
-      <artifactId>hawkular-apm-java-client</artifactId>
-      <version>${version.org.hawkular.apm.java.client}</version>
-    </dependency>
-
-    <!-- Hawkular-APM API: https://github.com/hawkular/hawkular-apm/tree/master/api -->
-    <dependency>
-      <groupId>org.hawkular.apm</groupId>
-      <artifactId>hawkular-apm-api</artifactId>
-      <version>${version.org.hawkular.apm}</version>
-    </dependency>
-
-    <!-- Hawkular-APM OpenTracing support: https://github.com/hawkular/hawkular-apm/tree/master/client/opentracing -->
-    <dependency>
-      <groupId>org.hawkular.apm</groupId>
-      <artifactId>hawkular-apm-client-opentracing</artifactId>
-      <version>${version.org.hawkular.apm}</version>
-    </dependency>
-
-    <!-- Hawkular APM Span REST recorder: https://github.com/hawkular/hawkular-apm/tree/master/client/trace-publisher-rest-client -->
-    <dependency>
-      <groupId>org.hawkular.apm</groupId>
-      <artifactId>hawkular-apm-trace-publisher-rest-client</artifactId>
-      <version>${version.org.hawkular.apm}</version>
+      <groupId>com.uber.jaeger</groupId>
+      <artifactId>jaeger-rest-client-java</artifactId>
+      <version>${version.com.uber.jaeger.rest-client}</version>
     </dependency>
 
     <!-- Jaeger -->
@@ -140,6 +118,7 @@
             <excludes combine.children="append">
               <!-- Ignore lombok config files -->
               <exclude>**/lombok.config</exclude>
+              <exlude>Jenkinsfile</exlude>
             </excludes>
           </configuration>
         </plugin>

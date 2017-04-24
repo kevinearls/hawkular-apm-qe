@@ -101,14 +101,14 @@ public class QESpanBuilder implements Tracer.SpanBuilder {
             }
         }
 
-        return new QESpan(tags, start, end, duration, operation, id, parent, spanObj, null);
+        return new QESpan(tags, start, end, duration, operation, id, parent, spanObj);
     }
 
     public QESpan build() {
         if (tracer != null) {
             throw new RuntimeException("Tracer has been set. Call 'start()' method to create online instance");
         }
-        return new QESpan(tags, start, end, duration, operation, id, parent, null, null);
+        return new QESpan(tags, start, end, duration, operation, id, parent, null);
     }
 
     public Tracer.SpanBuilder withTag(String name, Number value) {
