@@ -17,28 +17,27 @@
 
 package org.hawkular.apm.qe.tests.simple;
 
-import static org.testng.Assert.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
+import lombok.extern.slf4j.Slf4j;
+import org.hawkular.apm.qe.JaegerQEBase;
+import org.hawkular.apm.qe.model.JaegerRestClient;
+import org.hawkular.apm.qe.model.QESpan;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.hawkular.apm.qe.JaegerQEBase;
-import org.hawkular.apm.qe.model.JaegerRestClient;
-import org.hawkular.apm.qe.model.QESpan;
-
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
-import io.opentracing.Span;
-import io.opentracing.Tracer;
-
-import lombok.extern.slf4j.Slf4j;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+import static org.testng.Assert.*;
 
 
 /**
@@ -76,8 +75,13 @@ public class FirstJaegerTest extends JaegerQEBase {
                 .start();
         span.finish();
 
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesSinceTestStart(startTime).size() == 1);
+
         List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
-        assertEquals(1, traces.size(), "Expected 1 trace");
+        assertEquals(traces.size(), 1, "Expected 1 trace");
 
         List<QESpan> spans = getSpansFromTrace(traces.get(0));
         assertEquals(spans.size(), 1, "Expected 1 span");
@@ -151,6 +155,12 @@ public class FirstJaegerTest extends JaegerQEBase {
             testSpan.finish();
         }
 
+        final long blah = end;
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesBetween(startTime, blah).size() == 3);
+
         List<JsonNode> traces = restClient.getTracesBetween(startTime, end);
         assertEquals(traces.size(), 3, "Expected 3 traces");
 
@@ -179,6 +189,11 @@ public class FirstJaegerTest extends JaegerQEBase {
                 .start();
         Thread.sleep(75);
         secondSpan.finish();
+
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesSinceTestStart(startTime).size() == 2);
 
         List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 2, "Expected 2 traces");

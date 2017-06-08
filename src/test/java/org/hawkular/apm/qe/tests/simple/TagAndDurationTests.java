@@ -16,6 +16,9 @@
  */
 package org.hawkular.apm.qe.tests.simple;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -70,6 +73,11 @@ public class TagAndDurationTests extends JaegerQEBase {
                 .withTag("simple", true)
                 .start();
         span.finish();
+
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesSinceTestStart(startTime).size() == 1);
 
         List<JsonNode> traces = restClient.getTracesSinceTestStart(startTime);
         assertEquals(traces.size(), 1, "Expected 1 trace");
