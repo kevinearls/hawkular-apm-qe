@@ -34,11 +34,18 @@ import io.opentracing.Tracer;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+
 /**
  * @author Kevin Earls 14 April 2017
  */
 @Slf4j
 public class JaegerQEBase {
+
+    public JaegerRestClient restClient = getJaegerRestClient();
+
     /**
      *
      * @return A tracer
@@ -107,4 +114,20 @@ public class JaegerQEBase {
         QESpan qeSpan = new QESpan(tags, start, end, duration, operation, id, null, null, jsonSpan);
         return qeSpan;
     }
+
+    public void waitForTracesBetween(final long startTime, final long endTime, final int expectedCount) {
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesBetween(startTime, endTime).size() == expectedCount);
+    }
+
+    public  void waitForTracesSinceStart(final long startTime, final int expectedCount) {
+        await().with()
+                .pollInterval(100, MILLISECONDS)
+                .atMost(5, SECONDS)
+                .until(() -> restClient.getTracesSinceTestStart(startTime).size() == expectedCount);
+    }
+
+
 }
