@@ -41,7 +41,7 @@ public class JaegerRestClient {
     private static Map<String, String> evs = System.getenv();
     private static Integer JAEGER_FLUSH_INTERVAL = new Integer(evs.getOrDefault("JAEGER_FLUSH_INTERVAL", "100"));
     private static Integer JAEGER_API_PORT = new Integer(evs.getOrDefault("JAEGER_API_PORT", "16686"));
-    private static String JAEGER_SERVER_HOST = evs.getOrDefault("JAEGER_SERVER_HOST", "localhost");
+    private static String JAEGER_AGENT_HOST = evs.getOrDefault("JAEGER_AGENT_HOST", "localhost");
     private static String SERVICE_NAME = evs.getOrDefault("SERVICE_NAME", "qe-automation");
     private ObjectMapper jsonObjectMapper = new ObjectMapper();
 
@@ -63,7 +63,7 @@ public class JaegerRestClient {
     public List<JsonNode> getTraces(String parameters) throws Exception {
         waitForFlush(); // TODO make sure this is necessary
         Client client = ClientBuilder.newClient();
-        String targetUrl = "http://" + JAEGER_SERVER_HOST + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
+        String targetUrl = "http://" + JAEGER_AGENT_HOST + ":" + JAEGER_API_PORT + "/api/traces?service=" + SERVICE_NAME;
         if (parameters != null && !parameters.trim().isEmpty()) {
             targetUrl = targetUrl + "&" + parameters;
         }
